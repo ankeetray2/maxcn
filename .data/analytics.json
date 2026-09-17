@@ -1,0 +1,586 @@
+[
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "insights": {
+      "highestGammaStrike": {
+        "strike": 152500,
+        "gamma": 0.000053,
+        "optionType": "CALL"
+      },
+      "highestVegaStrike": {
+        "strike": 154000,
+        "vega": 131.9011,
+        "optionType": "PUT"
+      },
+      "maxPain": 153000,
+      "atmStrike": 153000,
+      "itmStrikes": {
+        "call": [
+          150500,
+          151000,
+          151500,
+          152000,
+          152500,
+          153000
+        ],
+        "put": [
+          153500,
+          154000,
+          154500,
+          155000,
+          155500
+        ]
+      },
+      "otmStrikes": {
+        "call": [
+          153500,
+          154000,
+          154500,
+          155000,
+          155500
+        ],
+        "put": [
+          150500,
+          151000,
+          151500,
+          152000,
+          152500,
+          153000
+        ]
+      },
+      "supportZone": {
+        "strike": 155000,
+        "oi": 6629,
+        "description": "Highest Put Concentration (OI: 6,629) acts as primary price floor."
+      },
+      "resistanceZone": {
+        "strike": 153000,
+        "oi": 5357,
+        "description": "Highest Call Concentration (OI: 5,357) forms major supply barrier."
+      },
+      "pcr": 1.12,
+      "totalCallOI": 40699,
+      "totalPutOI": 45646,
+      "sentiment": "NEUTRAL"
+    },
+    "scenarios": [
+      {
+        "scenarioLabel": "UNKNOWN +100",
+        "shift": 100,
+        "simulatedSpot": 153319,
+        "atmStrike": 153000,
+        "call": {
+          "premium": 3471.87,
+          "delta": 0.552,
+          "gamma": 0.000052,
+          "theta": -98.6996,
+          "vega": 134.674,
+          "rho": 40.0252,
+          "pnl": 3002.87
+        },
+        "put": {
+          "premium": 2770.97,
+          "delta": -0.4491,
+          "gamma": 0.00005,
+          "theta": -74.5151,
+          "vega": 134.7217,
+          "rho": -35.3204,
+          "pnl": 2532.97
+        }
+      },
+      {
+        "scenarioLabel": "UNKNOWN +500",
+        "shift": 500,
+        "simulatedSpot": 153719,
+        "atmStrike": 153000,
+        "call": {
+          "premium": 3696.78,
+          "delta": 0.5725,
+          "gamma": 0.000051,
+          "theta": -98.7934,
+          "vega": 133.9268,
+          "rho": 41.5794,
+          "pnl": 3227.78
+        },
+        "put": {
+          "premium": 2595.31,
+          "delta": -0.4292,
+          "gamma": 0.000049,
+          "theta": -74.6134,
+          "vega": 134.0363,
+          "rho": -33.8187,
+          "pnl": 2357.31
+        }
+      },
+      {
+        "scenarioLabel": "UNKNOWN +1000",
+        "shift": 1000,
+        "simulatedSpot": 154219,
+        "atmStrike": 153000,
+        "call": {
+          "premium": 3989.4,
+          "delta": 0.5978,
+          "gamma": 0.00005,
+          "theta": -98.5928,
+          "vega": 132.4969,
+          "rho": 43.501,
+          "pnl": 3520.4
+        },
+        "put": {
+          "premium": 2386.83,
+          "delta": -0.4048,
+          "gamma": 0.000049,
+          "theta": -74.4289,
+          "vega": 132.7158,
+          "rho": -31.9608,
+          "pnl": 2148.83
+        }
+      },
+      {
+        "scenarioLabel": "UNKNOWN -100",
+        "shift": -100,
+        "simulatedSpot": 153119,
+        "atmStrike": 153000,
+        "call": {
+          "premium": 3362.5,
+          "delta": 0.5417,
+          "gamma": 0.000052,
+          "theta": -98.5664,
+          "vega": 134.9121,
+          "rho": 39.2439,
+          "pnl": 2893.5
+        },
+        "put": {
+          "premium": 2861.79,
+          "delta": -0.4591,
+          "gamma": 0.00005,
+          "theta": -74.3826,
+          "vega": 134.9379,
+          "rho": -36.0752,
+          "pnl": 2623.79
+        }
+      },
+      {
+        "scenarioLabel": "UNKNOWN -500",
+        "shift": -500,
+        "simulatedSpot": 152719,
+        "atmStrike": 153000,
+        "call": {
+          "premium": 3150,
+          "delta": 0.5209,
+          "gamma": 0.000052,
+          "theta": -98.1258,
+          "vega": 135.1133,
+          "rho": 37.6753,
+          "pnl": 2681
+        },
+        "put": {
+          "premium": 3049.44,
+          "delta": -0.4791,
+          "gamma": 0.00005,
+          "theta": -73.9494,
+          "vega": 135.1136,
+          "rho": -37.5901,
+          "pnl": 2811.44
+        }
+      },
+      {
+        "scenarioLabel": "UNKNOWN -1000",
+        "shift": -1000,
+        "simulatedSpot": 152219,
+        "atmStrike": 153000,
+        "call": {
+          "premium": 2896.09,
+          "delta": 0.4947,
+          "gamma": 0.000052,
+          "theta": -97.2472,
+          "vega": 134.8437,
+          "rho": 35.709,
+          "pnl": 2427.09
+        },
+        "put": {
+          "premium": 3295.31,
+          "delta": -0.5044,
+          "gamma": 0.000051,
+          "theta": -73.0912,
+          "vega": 134.8473,
+          "rho": -39.4889,
+          "pnl": 3057.31
+        }
+      }
+    ],
+    "chartData": {
+      "deltaCurve": [
+        {
+          "strike": 150500,
+          "callDelta": 0.6738,
+          "putDelta": -0.3311
+        },
+        {
+          "strike": 151000,
+          "callDelta": 0.6494,
+          "putDelta": -0.3548
+        },
+        {
+          "strike": 151500,
+          "callDelta": 0.6244,
+          "putDelta": -0.3791
+        },
+        {
+          "strike": 152000,
+          "callDelta": 0.5987,
+          "putDelta": -0.4039
+        },
+        {
+          "strike": 152500,
+          "callDelta": 0.5726,
+          "putDelta": -0.4292
+        },
+        {
+          "strike": 153000,
+          "callDelta": 0.5462,
+          "putDelta": -0.4547
+        },
+        {
+          "strike": 153500,
+          "callDelta": 0.5195,
+          "putDelta": -0.4805
+        },
+        {
+          "strike": 154000,
+          "callDelta": 0.4929,
+          "putDelta": -0.5062
+        },
+        {
+          "strike": 154500,
+          "callDelta": 0.4665,
+          "putDelta": -0.5317
+        },
+        {
+          "strike": 155000,
+          "callDelta": 0.4404,
+          "putDelta": -0.5569
+        },
+        {
+          "strike": 155500,
+          "callDelta": 0.4148,
+          "putDelta": -0.5816
+        }
+      ],
+      "gammaCurve": [
+        {
+          "strike": 150500,
+          "gamma": 0.000048
+        },
+        {
+          "strike": 151000,
+          "gamma": 0.000049
+        },
+        {
+          "strike": 151500,
+          "gamma": 0.000051
+        },
+        {
+          "strike": 152000,
+          "gamma": 0.000052
+        },
+        {
+          "strike": 152500,
+          "gamma": 0.000053
+        },
+        {
+          "strike": 153000,
+          "gamma": 0.000053
+        },
+        {
+          "strike": 153500,
+          "gamma": 0.000053
+        },
+        {
+          "strike": 154000,
+          "gamma": 0.000053
+        },
+        {
+          "strike": 154500,
+          "gamma": 0.000053
+        },
+        {
+          "strike": 155000,
+          "gamma": 0.000053
+        },
+        {
+          "strike": 155500,
+          "gamma": 0.000052
+        }
+      ],
+      "thetaCurve": [
+        {
+          "strike": 150500,
+          "callTheta": -97.3459,
+          "putTheta": -73.7787
+        },
+        {
+          "strike": 151000,
+          "callTheta": -98.812,
+          "putTheta": -75.1187
+        },
+        {
+          "strike": 151500,
+          "callTheta": -99.9397,
+          "putTheta": -76.128
+        },
+        {
+          "strike": 152000,
+          "callTheta": -100.7076,
+          "putTheta": -76.7876
+        },
+        {
+          "strike": 152500,
+          "callTheta": -101.099,
+          "putTheta": -77.0822
+        },
+        {
+          "strike": 153000,
+          "callTheta": -101.1017,
+          "putTheta": -77.0008
+        },
+        {
+          "strike": 153500,
+          "callTheta": -100.9394,
+          "putTheta": -76.768
+        },
+        {
+          "strike": 154000,
+          "callTheta": -100.5397,
+          "putTheta": -76.3112
+        },
+        {
+          "strike": 154500,
+          "callTheta": -99.7578,
+          "putTheta": -75.4849
+        },
+        {
+          "strike": 155000,
+          "callTheta": -98.5666,
+          "putTheta": -74.2611
+        },
+        {
+          "strike": 155500,
+          "callTheta": -97.0634,
+          "putTheta": -72.7353
+        }
+      ],
+      "vegaCurve": [
+        {
+          "strike": 150500,
+          "vega": 119.1852
+        },
+        {
+          "strike": 151000,
+          "vega": 122.5511
+        },
+        {
+          "strike": 151500,
+          "vega": 125.4545
+        },
+        {
+          "strike": 152000,
+          "vega": 127.8567
+        },
+        {
+          "strike": 152500,
+          "vega": 129.7247
+        },
+        {
+          "strike": 153000,
+          "vega": 131.0321
+        },
+        {
+          "strike": 153500,
+          "vega": 131.7594
+        },
+        {
+          "strike": 154000,
+          "vega": 131.896
+        },
+        {
+          "strike": 154500,
+          "vega": 131.4516
+        },
+        {
+          "strike": 155000,
+          "vega": 130.4437
+        },
+        {
+          "strike": 155500,
+          "vega": 128.8997
+        }
+      ],
+      "ivSmile": [
+        {
+          "strike": 150500,
+          "callIV": 22.77,
+          "putIV": 23.57
+        },
+        {
+          "strike": 151000,
+          "callIV": 22.72,
+          "putIV": 23.52
+        },
+        {
+          "strike": 151500,
+          "callIV": 22.67,
+          "putIV": 23.47
+        },
+        {
+          "strike": 152000,
+          "callIV": 22.62,
+          "putIV": 23.42
+        },
+        {
+          "strike": 152500,
+          "callIV": 22.57,
+          "putIV": 23.37
+        },
+        {
+          "strike": 153000,
+          "callIV": 22.52,
+          "putIV": 23.32
+        },
+        {
+          "strike": 153500,
+          "callIV": 22.53,
+          "putIV": 23.33
+        },
+        {
+          "strike": 154000,
+          "callIV": 22.58,
+          "putIV": 23.38
+        },
+        {
+          "strike": 154500,
+          "callIV": 22.63,
+          "putIV": 23.43
+        },
+        {
+          "strike": 155000,
+          "callIV": 22.67,
+          "putIV": 23.47
+        },
+        {
+          "strike": 155500,
+          "callIV": 22.72,
+          "putIV": 23.52
+        }
+      ],
+      "oiDistribution": [
+        {
+          "strike": 150500,
+          "callOI": 2298,
+          "putOI": 1731
+        },
+        {
+          "strike": 151000,
+          "callOI": 4631,
+          "putOI": 5069
+        },
+        {
+          "strike": 151500,
+          "callOI": 3659,
+          "putOI": 5999
+        },
+        {
+          "strike": 152000,
+          "callOI": 3717,
+          "putOI": 5198
+        },
+        {
+          "strike": 152500,
+          "callOI": 3610,
+          "putOI": 2214
+        },
+        {
+          "strike": 153000,
+          "callOI": 5357,
+          "putOI": 4163
+        },
+        {
+          "strike": 153500,
+          "callOI": 4332,
+          "putOI": 4966
+        },
+        {
+          "strike": 154000,
+          "callOI": 4418,
+          "putOI": 2866
+        },
+        {
+          "strike": 154500,
+          "callOI": 2942,
+          "putOI": 3738
+        },
+        {
+          "strike": 155000,
+          "callOI": 1952,
+          "putOI": 6629
+        },
+        {
+          "strike": 155500,
+          "callOI": 3783,
+          "putOI": 3073
+        }
+      ],
+      "pcrChart": [
+        {
+          "strike": 150500,
+          "pcr": 0.75
+        },
+        {
+          "strike": 151000,
+          "pcr": 1.09
+        },
+        {
+          "strike": 151500,
+          "pcr": 1.64
+        },
+        {
+          "strike": 152000,
+          "pcr": 1.4
+        },
+        {
+          "strike": 152500,
+          "pcr": 0.61
+        },
+        {
+          "strike": 153000,
+          "pcr": 0.78
+        },
+        {
+          "strike": 153500,
+          "pcr": 1.15
+        },
+        {
+          "strike": 154000,
+          "pcr": 0.65
+        },
+        {
+          "strike": 154500,
+          "pcr": 1.27
+        },
+        {
+          "strike": 155000,
+          "pcr": 3.4
+        },
+        {
+          "strike": 155500,
+          "pcr": 0.81
+        }
+      ]
+    },
+    "id": "anl_1789651276673_zoec1w",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  }
+]

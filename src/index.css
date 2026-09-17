@@ -1,0 +1,237 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #F7FAFB;
+  --surface: #FFFFFF;
+
+  --primary: #00778A;
+  --primary-hover: #006070;
+  --primary-light: #E6F3F5;
+  --secondary: #B5CEDA;
+
+  --accent: #7A9266;
+  --accent-light: #F0F4ED;
+
+  --heading: #1D2939;
+  --text: #667085;
+
+  --border: #DCE9EE;
+
+  --success: #12B76A;
+  --success-light: #ECFDF3;
+  --danger: #F04438;
+  --danger-light: #FEF3F2;
+  --warning: #F79009;
+  --warning-light: #FFFAEB;
+}
+
+.dark {
+  --background: #0B131B;
+  --surface: #141F2B;
+
+  --primary: #00A3BD;
+  --primary-hover: #00889E;
+  --primary-light: #162E3B;
+  --secondary: #2C3E50;
+
+  --accent: #8EAD77;
+  --accent-light: #1B2B20;
+
+  --heading: #F0F6F9;
+  --text: #94A3B8;
+
+  --border: #223444;
+
+  --success: #10B981;
+  --success-light: #064E3B;
+  --danger: #F43F5E;
+  --danger-light: #4C0519;
+  --warning: #F59E0B;
+  --warning-light: #451A03;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: #F7FAFB;
+  color: #1D2939;
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.dark body,
+html.dark body {
+  background-color: #0B131B;
+  color: #F0F6F9;
+}
+
+.font-heading {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
+
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Glassmorphism specification matching design inspiration */
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(220, 233, 238, 0.85);
+  border-radius: 24px;
+}
+
+.dark .glass-panel {
+  background-color: rgba(20, 31, 43, 0.85);
+  border: 1px solid rgba(34, 52, 68, 0.85);
+}
+
+.glass-panel-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-hover:hover {
+  background-color: rgba(255, 255, 255, 0.88);
+  border-color: rgba(181, 206, 218, 0.95);
+  box-shadow: 0 16px 36px -12px rgba(0, 119, 138, 0.09);
+  transform: translateY(-2px);
+}
+
+.dark .glass-panel-hover:hover {
+  background-color: rgba(26, 40, 56, 0.95);
+  border-color: rgba(0, 163, 189, 0.45);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.45);
+}
+
+.floating-gradient-1 {
+  background: radial-gradient(circle, rgba(0, 119, 138, 0.12) 0%, rgba(181, 206, 218, 0.05) 50%, transparent 70%);
+}
+
+.dark .floating-gradient-1 {
+  background: radial-gradient(circle, rgba(0, 163, 189, 0.18) 0%, rgba(34, 52, 68, 0.10) 50%, transparent 70%);
+}
+
+.floating-gradient-2 {
+  background: radial-gradient(circle, rgba(122, 146, 102, 0.12) 0%, rgba(247, 250, 251, 0) 70%);
+}
+
+.dark .floating-gradient-2 {
+  background: radial-gradient(circle, rgba(142, 173, 119, 0.15) 0%, rgba(11, 19, 27, 0) 70%);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #B5CEDA;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00778A;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #223444;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #00A3BD;
+}
+
+/* Institutional Terminal Dark Mode Refinement Mappings */
+.dark .bg-white {
+  background-color: #141F2B !important;
+}
+
+.dark .bg-white\/70,
+.dark .bg-white\/75,
+.dark .bg-white\/80,
+.dark .bg-white\/85,
+.dark .bg-white\/90 {
+  background-color: rgba(20, 31, 43, 0.90) !important;
+}
+
+.dark .bg-\[\#F7FAFB\] {
+  background-color: #0E1721 !important;
+}
+
+.dark .bg-\[\#FAFCFD\] {
+  background-color: #101B26 !important;
+}
+
+.dark .border-\[\#DCE9EE\] {
+  border-color: #223444 !important;
+}
+
+.dark .border-\[\#E4EBF0\] {
+  border-color: #1C2C3A !important;
+}
+
+.dark .border-\[\#DCE9EE\]\/60,
+.dark .border-\[\#DCE9EE\]\/80 {
+  border-color: rgba(34, 52, 68, 0.8) !important;
+}
+
+.dark .text-\[\#1D2939\] {
+  color: #F1F5F9 !important;
+}
+
+.dark .text-\[\#344054\] {
+  color: #CBD5E1 !important;
+}
+
+.dark .text-\[\#475467\] {
+  color: #94A3B8 !important;
+}
+
+.dark .text-\[\#667085\] {
+  color: #8C9CAE !important;
+}
+
+.dark .text-\[\#98A2B3\] {
+  color: #64748B !important;
+}
+
+.dark .hover\:bg-\[\#F7FAFB\]:hover {
+  background-color: #1A2837 !important;
+}
+
+.dark .hover\:bg-white:hover {
+  background-color: #182533 !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  color-scheme: dark;
+}
+
+.dark .recharts-cartesian-grid line {
+  stroke: #223444 !important;
+}
+
+.dark .recharts-text {
+  fill: #8C9CAE !important;
+}
+
+.dark .recharts-default-tooltip {
+  background-color: #141F2B !important;
+  border: 1px solid #223444 !important;
+  color: #F1F5F9 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .recharts-tooltip-item {
+  color: #CBD5E1 !important;
+}
+
+.dark .recharts-tooltip-label {
+  color: #F1F5F9 !important;
+}

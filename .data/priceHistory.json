@@ -1,0 +1,93 @@
+[
+  {
+    "commodity": "Gold Mini",
+    "currentPrice": 153330,
+    "open": 153346,
+    "high": 153346,
+    "low": 153305,
+    "close": 153330,
+    "source": "screenshot",
+    "rawMetadata": {
+      "filename": "tradingview_gold_chart.png",
+      "timeframe": "5m",
+      "ocrCorrections": []
+    },
+    "id": "prc_1789651705149_jfigb",
+    "createdAt": "2026-09-17T13:28:25.149Z"
+  },
+  {
+    "commodity": "Gold Mini",
+    "currentPrice": 153330,
+    "close": 153330,
+    "source": "csv",
+    "rawMetadata": {
+      "filename": "test_gold_prices.csv",
+      "rowsParsed": 2
+    },
+    "id": "prc_1789651691304_z7gzxn",
+    "createdAt": "2026-09-17T13:28:11.304Z"
+  },
+  {
+    "commodity": "Gold Mini",
+    "currentPrice": 153450.5,
+    "close": 153450.5,
+    "source": "manual",
+    "id": "prc_1789651685572_uh6vlya",
+    "createdAt": "2026-09-17T13:28:05.572Z"
+  },
+  {
+    "id": "prc_init_1",
+    "commodity": "Gold Mini",
+    "currentPrice": 153330,
+    "open": 153346,
+    "high": 153346,
+    "low": 153305,
+    "close": 153330,
+    "source": "screenshot",
+    "createdAt": "2026-09-17T13:25:59.168Z"
+  },
+  {
+    "id": "prc_init_2",
+    "commodity": "Gold Mini",
+    "currentPrice": 153280,
+    "open": 153250,
+    "high": 153310,
+    "low": 153220,
+    "close": 153280,
+    "source": "manual",
+    "createdAt": "2026-09-17T13:12:59.168Z"
+  },
+  {
+    "id": "prc_init_3",
+    "commodity": "Gold Mini",
+    "currentPrice": 153219,
+    "open": 153180,
+    "high": 153260,
+    "low": 153150,
+    "close": 153219,
+    "source": "option-chain",
+    "createdAt": "2026-09-17T12:42:59.168Z"
+  },
+  {
+    "id": "prc_init_4",
+    "commodity": "Gold Mini",
+    "currentPrice": 153120,
+    "open": 153050,
+    "high": 153150,
+    "low": 153020,
+    "close": 153120,
+    "source": "manual",
+    "createdAt": "2026-09-17T11:57:59.168Z"
+  },
+  {
+    "id": "prc_init_5",
+    "commodity": "Gold Mini",
+    "currentPrice": 153040,
+    "open": 152980,
+    "high": 153090,
+    "low": 152940,
+    "close": 153040,
+    "source": "csv",
+    "createdAt": "2026-09-17T10:27:59.168Z"
+  }
+]

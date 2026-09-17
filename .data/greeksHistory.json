@@ -1,0 +1,551 @@
+[
+  {
+    "commodity": "Gold Mini",
+    "expiry": "EXPIRY-CSV",
+    "spotPrice": 153330,
+    "strike": 153000,
+    "call": {
+      "delta": 0.612,
+      "gamma": 0.000045,
+      "theta": -124.5,
+      "vega": 142.3,
+      "rho": 42.1,
+      "iv": 25,
+      "ltp": 330,
+      "oi": 1000
+    },
+    "put": {
+      "delta": -0.388,
+      "gamma": 0.000045,
+      "theta": -124.5,
+      "vega": 142.3,
+      "rho": 42.1,
+      "iv": 25,
+      "ltp": 10,
+      "oi": 1000
+    },
+    "id": "gh_1789651691304_0_oxnn5",
+    "createdAt": "2026-09-17T13:28:11.304Z"
+  },
+  {
+    "commodity": "Gold Mini",
+    "expiry": "EXPIRY-CSV",
+    "spotPrice": 153330,
+    "strike": 153200,
+    "call": {
+      "delta": 0.545,
+      "gamma": 0.000049,
+      "theta": -138.2,
+      "vega": 150.1,
+      "rho": 39.5,
+      "iv": 25,
+      "ltp": 130,
+      "oi": 1000
+    },
+    "put": {
+      "delta": -0.45499999999999996,
+      "gamma": 0.000049,
+      "theta": -138.2,
+      "vega": 150.1,
+      "rho": 39.5,
+      "iv": 25,
+      "ltp": 10,
+      "oi": 1000
+    },
+    "id": "gh_1789651691304_1_2rysvj",
+    "createdAt": "2026-09-17T13:28:11.304Z"
+  },
+  {
+    "uploadId": "upl_1789651461097_9w7via",
+    "commodity": "Gold Mini",
+    "expiry": "2025-10-05",
+    "spotPrice": 153219,
+    "strike": 140000,
+    "call": {
+      "delta": 0.97,
+      "gamma": 0.000008,
+      "theta": -36.07,
+      "vega": 17.63,
+      "rho": 30.27,
+      "iv": 33.67,
+      "ltp": 13158,
+      "oi": 186
+    },
+    "put": {
+      "delta": -0.03,
+      "gamma": 0.000008,
+      "theta": -36.07,
+      "vega": 17.63,
+      "rho": -1.22,
+      "iv": 33.67,
+      "ltp": 109,
+      "oi": 8512
+    },
+    "id": "gh_1789651461098_0_blvitu",
+    "createdAt": "2026-09-17T13:24:21.098Z"
+  },
+  {
+    "uploadId": "upl_1789651461097_9w7via",
+    "commodity": "Gold Mini",
+    "expiry": "2025-10-05",
+    "spotPrice": 153219,
+    "strike": 145000,
+    "call": {
+      "delta": 0.88,
+      "gamma": 0.000015,
+      "theta": -42.15,
+      "vega": 26.4,
+      "rho": 28.15,
+      "iv": 32.1,
+      "ltp": 8640,
+      "oi": 450
+    },
+    "put": {
+      "delta": -0.12,
+      "gamma": 0.000015,
+      "theta": -42.15,
+      "vega": 26.4,
+      "rho": -3.85,
+      "iv": 32.1,
+      "ltp": 345,
+      "oi": 6320
+    },
+    "id": "gh_1789651461098_1_v9y3iq",
+    "createdAt": "2026-09-17T13:24:21.098Z"
+  },
+  {
+    "uploadId": "upl_1789651461097_9w7via",
+    "commodity": "Gold Mini",
+    "expiry": "2025-10-05",
+    "spotPrice": 153219,
+    "strike": 150000,
+    "call": {
+      "delta": 0.68,
+      "gamma": 0.000028,
+      "theta": -54.8,
+      "vega": 38.5,
+      "rho": 23.4,
+      "iv": 30.45,
+      "ltp": 4950,
+      "oi": 1850
+    },
+    "put": {
+      "delta": -0.32,
+      "gamma": 0.000028,
+      "theta": -54.8,
+      "vega": 38.5,
+      "rho": -8.9,
+      "iv": 30.45,
+      "ltp": 980,
+      "oi": 4890
+    },
+    "id": "gh_1789651461098_2_ttru8o",
+    "createdAt": "2026-09-17T13:24:21.098Z"
+  },
+  {
+    "uploadId": "upl_1789651461097_9w7via",
+    "commodity": "Gold Mini",
+    "expiry": "2025-10-05",
+    "spotPrice": 153219,
+    "strike": 153000,
+    "call": {
+      "delta": 0.52,
+      "gamma": 0.000035,
+      "theta": -61.2,
+      "vega": 44.8,
+      "rho": 18.2,
+      "iv": 29.8,
+      "ltp": 3120,
+      "oi": 3850
+    },
+    "put": {
+      "delta": -0.48,
+      "gamma": 0.000035,
+      "theta": -61.2,
+      "vega": 44.8,
+      "rho": -14.6,
+      "iv": 29.8,
+      "ltp": 2180,
+      "oi": 4120
+    },
+    "id": "gh_1789651461098_3_ndpff6",
+    "createdAt": "2026-09-17T13:24:21.098Z"
+  },
+  {
+    "uploadId": "upl_1789651461097_9w7via",
+    "commodity": "Gold Mini",
+    "expiry": "2025-10-05",
+    "spotPrice": 153219,
+    "strike": 155000,
+    "call": {
+      "delta": 0.41,
+      "gamma": 0.000032,
+      "theta": -58.4,
+      "vega": 42.1,
+      "rho": 14.5,
+      "iv": 30.15,
+      "ltp": 2150,
+      "oi": 4920
+    },
+    "put": {
+      "delta": -0.59,
+      "gamma": 0.000032,
+      "theta": -58.4,
+      "vega": 42.1,
+      "rho": -18.7,
+      "iv": 30.15,
+      "ltp": 3240,
+      "oi": 2950
+    },
+    "id": "gh_1789651461098_4_6ilbe",
+    "createdAt": "2026-09-17T13:24:21.098Z"
+  },
+  {
+    "uploadId": "upl_1789651461097_9w7via",
+    "commodity": "Gold Mini",
+    "expiry": "2025-10-05",
+    "spotPrice": 153219,
+    "strike": 160000,
+    "call": {
+      "delta": 0.21,
+      "gamma": 0.00002,
+      "theta": -41.2,
+      "vega": 29.7,
+      "rho": 7.8,
+      "iv": 31.5,
+      "ltp": 860,
+      "oi": 6850
+    },
+    "put": {
+      "delta": -0.79,
+      "gamma": 0.00002,
+      "theta": -41.2,
+      "vega": 29.7,
+      "rho": -25.4,
+      "iv": 31.5,
+      "ltp": 6980,
+      "oi": 1240
+    },
+    "id": "gh_1789651461098_5_qicsl5",
+    "createdAt": "2026-09-17T13:24:21.098Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 150500,
+    "call": {
+      "delta": 0.6738,
+      "gamma": 0.000048,
+      "theta": -97.3459,
+      "vega": 119.1852,
+      "rho": 45.8396,
+      "iv": 22.77,
+      "ltp": 2969,
+      "oi": 2298
+    },
+    "put": {
+      "delta": -0.3311,
+      "gamma": 0.000047,
+      "theta": -73.7787,
+      "vega": 119.9063,
+      "rho": -24.4397,
+      "iv": 23.57,
+      "ltp": 220,
+      "oi": 1731
+    },
+    "id": "gh_1789651276673_0_cvl4bbr",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 151000,
+    "call": {
+      "delta": 0.6494,
+      "gamma": 0.000049,
+      "theta": -98.812,
+      "vega": 122.5511,
+      "rho": 44.2498,
+      "iv": 22.72,
+      "ltp": 2469,
+      "oi": 4631
+    },
+    "put": {
+      "delta": -0.3548,
+      "gamma": 0.000048,
+      "theta": -75.1187,
+      "vega": 123.0785,
+      "rho": -26.2131,
+      "iv": 23.52,
+      "ltp": 223,
+      "oi": 5069
+    },
+    "id": "gh_1789651276673_1_duv6f9",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 151500,
+    "call": {
+      "delta": 0.6244,
+      "gamma": 0.000051,
+      "theta": -99.9397,
+      "vega": 125.4545,
+      "rho": 42.6073,
+      "iv": 22.67,
+      "ltp": 1969,
+      "oi": 3659
+    },
+    "put": {
+      "delta": -0.3791,
+      "gamma": 0.000049,
+      "theta": -76.128,
+      "vega": 125.8119,
+      "rho": -28.0348,
+      "iv": 23.47,
+      "ltp": 227,
+      "oi": 5999
+    },
+    "id": "gh_1789651276673_2_c4rlvw",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 152000,
+    "call": {
+      "delta": 0.5987,
+      "gamma": 0.000052,
+      "theta": -100.7076,
+      "vega": 127.8567,
+      "rho": 40.9185,
+      "iv": 22.62,
+      "ltp": 1469,
+      "oi": 3717
+    },
+    "put": {
+      "delta": -0.4039,
+      "gamma": 0.00005,
+      "theta": -76.7876,
+      "vega": 128.0727,
+      "rho": -29.8987,
+      "iv": 23.42,
+      "ltp": 231,
+      "oi": 5198
+    },
+    "id": "gh_1789651276673_3_akyw1f",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 152500,
+    "call": {
+      "delta": 0.5726,
+      "gamma": 0.000053,
+      "theta": -101.099,
+      "vega": 129.7247,
+      "rho": 39.1908,
+      "iv": 22.57,
+      "ltp": 969,
+      "oi": 3610
+    },
+    "put": {
+      "delta": -0.4292,
+      "gamma": 0.000051,
+      "theta": -77.0822,
+      "vega": 129.832,
+      "rho": -31.7983,
+      "iv": 23.37,
+      "ltp": 234,
+      "oi": 2214
+    },
+    "id": "gh_1789651276673_4_us0yaj",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 153000,
+    "call": {
+      "delta": 0.5462,
+      "gamma": 0.000053,
+      "theta": -101.1017,
+      "vega": 131.0321,
+      "rho": 37.4319,
+      "iv": 22.52,
+      "ltp": 469,
+      "oi": 5357
+    },
+    "put": {
+      "delta": -0.4547,
+      "gamma": 0.000051,
+      "theta": -77.0008,
+      "vega": 131.0665,
+      "rho": -33.7264,
+      "iv": 23.32,
+      "ltp": 238,
+      "oi": 4163
+    },
+    "id": "gh_1789651276673_5_fbqplz",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 153500,
+    "call": {
+      "delta": 0.5195,
+      "gamma": 0.000053,
+      "theta": -100.9394,
+      "vega": 131.7594,
+      "rho": 35.6461,
+      "iv": 22.53,
+      "ltp": 248,
+      "oi": 4332
+    },
+    "put": {
+      "delta": -0.4805,
+      "gamma": 0.000052,
+      "theta": -76.768,
+      "vega": 131.7593,
+      "rho": -35.6794,
+      "iv": 23.33,
+      "ltp": 521,
+      "oi": 4966
+    },
+    "id": "gh_1789651276673_6_a3kg1s",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 154000,
+    "call": {
+      "delta": 0.4929,
+      "gamma": 0.000053,
+      "theta": -100.5397,
+      "vega": 131.896,
+      "rho": 33.8567,
+      "iv": 22.58,
+      "ltp": 244,
+      "oi": 4418
+    },
+    "put": {
+      "delta": -0.5062,
+      "gamma": 0.000052,
+      "theta": -76.3112,
+      "vega": 131.9011,
+      "rho": -37.6359,
+      "iv": 23.38,
+      "ltp": 1021,
+      "oi": 2866
+    },
+    "id": "gh_1789651276673_7_6rgb9",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 154500,
+    "call": {
+      "delta": 0.4665,
+      "gamma": 0.000053,
+      "theta": -99.7578,
+      "vega": 131.4516,
+      "rho": 32.0779,
+      "iv": 22.63,
+      "ltp": 240,
+      "oi": 2942
+    },
+    "put": {
+      "delta": -0.5317,
+      "gamma": 0.000051,
+      "theta": -75.4849,
+      "vega": 131.5007,
+      "rho": -39.5828,
+      "iv": 23.43,
+      "ltp": 1521,
+      "oi": 3738
+    },
+    "id": "gh_1789651276673_8_hqluc",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 155000,
+    "call": {
+      "delta": 0.4404,
+      "gamma": 0.000053,
+      "theta": -98.5666,
+      "vega": 130.4437,
+      "rho": 30.316,
+      "iv": 22.67,
+      "ltp": 236,
+      "oi": 1952
+    },
+    "put": {
+      "delta": -0.5569,
+      "gamma": 0.000051,
+      "theta": -74.2611,
+      "vega": 130.5738,
+      "rho": -41.5145,
+      "iv": 23.47,
+      "ltp": 2021,
+      "oi": 6629
+    },
+    "id": "gh_1789651276673_9_8v46wp",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  },
+  {
+    "uploadId": "upl_1789651276672_vtu6l4",
+    "commodity": "Unknown",
+    "expiry": "2026-10-05",
+    "spotPrice": 153219,
+    "strike": 155500,
+    "call": {
+      "delta": 0.4148,
+      "gamma": 0.000052,
+      "theta": -97.0634,
+      "vega": 128.8997,
+      "rho": 28.5813,
+      "iv": 22.72,
+      "ltp": 232,
+      "oi": 3783
+    },
+    "put": {
+      "delta": -0.5816,
+      "gamma": 0.00005,
+      "theta": -72.7353,
+      "vega": 129.1446,
+      "rho": -43.4215,
+      "iv": 23.52,
+      "ltp": 2521,
+      "oi": 3073
+    },
+    "id": "gh_1789651276673_10_54phj",
+    "createdAt": "2026-09-17T13:21:16.673Z"
+  }
+]

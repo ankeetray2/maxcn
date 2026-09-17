@@ -1,0 +1,6 @@
+{
+  "name": "Commodity Greeks Pro",
+  "description": "Enterprise-grade Commodity Option Greeks Calculation Engine for MCX Commodities (Gold, Silver, Crude Oil, Natural Gas, Copper, Zinc, Aluminium, Lead, Nickel) using Black-Scholes model, scenario simulations, and MongoDB persistence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGreeksStore } from '../../store/useGreeksStore';
+import { usePriceStore } from '../../store/priceStore';
 import { COMMODITY_SPECS } from '../../services/mockData';
 import { downloadExcelFile } from '../../utils/excel';
 import {
@@ -27,6 +28,8 @@ export const HistoryView: React.FC = () => {
     databaseStatus,
     isSyncingApi
   } = useGreeksStore();
+
+  const { currentPrice: liveGoldPrice, changePercent: liveChangePercent } = usePriceStore();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [commodityFilter, setCommodityFilter] = useState<string>('ALL');
@@ -99,6 +102,16 @@ export const HistoryView: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5">
+            {/* Live Gold Price Synchronized Badge */}
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F7FAFB] dark:bg-[#1A2936] border border-[#DCE9EE] dark:border-[#2E4052] text-xs">
+              <span className="w-2 h-2 rounded-full bg-[#12B76A] animate-pulse" />
+              <span className="text-[#667085] dark:text-[#94A3B8]">Live Gold:</span>
+              <strong className="font-mono text-[#1D2939] dark:text-white">₹{liveGoldPrice.toLocaleString('en-IN')}</strong>
+              <span className={`text-[10px] font-semibold ${liveChangePercent >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
+                ({liveChangePercent >= 0 ? '+' : ''}{liveChangePercent}%)
+              </span>
+            </div>
+
             <button
               onClick={() => fetchHistoryFromBackend()}
               disabled={isSyncingApi}

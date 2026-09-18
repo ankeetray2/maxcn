@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGreeksStore, NavigationTab } from '../../store/useGreeksStore';
+import { useAuthStore } from '../../store/authStore';
 import { COMMODITY_SPECS } from '../../services/mockData';
 import { CommodityType } from '../../types';
 import { formatCurrency, formatGreek } from '../../utils/greeks';
@@ -17,7 +18,12 @@ import {
   BarChart2,
   FileSpreadsheet,
   Sun,
-  Moon
+  Moon,
+  UserCheck,
+  LogIn,
+  LogOut,
+  Sparkles,
+  Lock
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -32,6 +38,8 @@ export const Sidebar: React.FC = () => {
     toggleTheme
   } = useGreeksStore();
 
+  const { user, isAuthenticated, logout, setAuthMode } = useAuthStore();
+
   const commodities: CommodityType[] = ['CRUDEOIL', 'GOLD', 'SILVER', 'NATURALGAS', 'COPPER', 'ZINC'];
 
   const navLinks: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string }[] = [
@@ -40,7 +48,8 @@ export const Sidebar: React.FC = () => {
     { id: 'analytics', label: 'Analytics & Trends', icon: LineChart },
     { id: 'uploads', label: 'Price Ingestion', icon: Upload, badge: 'Smart' },
     { id: 'history', label: 'Historical Data', icon: History },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'auth', label: isAuthenticated ? 'Trader Account' : 'Sign In / Register', icon: UserCheck, badge: isAuthenticated ? 'Active' : 'Google' }
   ];
 
   return (
@@ -68,17 +77,32 @@ export const Sidebar: React.FC = () => {
                   <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#667085]'}`} />
                   <span>{link.label}</span>
                 </div>
-                {link.badge && (
-                  <span
-                    className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-[#E6F3F5] text-[#00778A]'
-                    }`}
-                  >
-                    {link.badge}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {!isAuthenticated && (link.id === 'analytics' || link.id === 'history') && (
+                    <span
+                      title="Authentication required to view"
+                      className={`flex items-center gap-0.5 px-1.5 py-0.5 text-[9px] font-bold rounded-md ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-[#FEF3F2] dark:bg-[#7F1D1D]/30 text-[#F04438]'
+                      }`}
+                    >
+                      <Lock className="w-2.5 h-2.5" />
+                      <span>Lock</span>
+                    </span>
+                  )}
+                  {link.badge && (
+                    <span
+                      className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md ${
+                        isActive
+                          ? 'bg-white/20 text-white'
+                          : 'bg-[#E6F3F5] text-[#00778A]'
+                      }`}
+                    >
+                      {link.badge}
+                    </span>
+                  )}
+                </div>
               </button>
             );
           })}
@@ -104,6 +128,78 @@ export const Sidebar: React.FC = () => {
             </span>
           </button>
         </div>
+      </div>
+
+      {/* Trader Account & Google Auth Status Card */}
+      <div className="glass-panel p-4 shadow-xs">
+        {isAuthenticated && user ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold tracking-wider text-[#667085] uppercase">
+                Trader Session
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#12B76A] bg-[#ECFDF3] px-2 py-0.5 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A] animate-pulse" />
+                Active
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/70 border border-[#DCE9EE]/80">
+              <img
+                src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
+                alt={user.name}
+                className="w-9 h-9 rounded-lg object-cover bg-gray-100 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-[#1D2939] truncate">{user.name}</div>
+                <div className="text-[11px] font-mono text-[#667085] truncate">{user.email}</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] pt-1">
+              <button
+                onClick={() => setActiveTab('auth')}
+                className="text-[#00778A] hover:underline font-semibold cursor-pointer"
+              >
+                Manage Profile
+              </button>
+              <button
+                onClick={logout}
+                className="text-[#F04438] hover:underline font-semibold cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2.5 text-center">
+            <div className="text-left">
+              <div className="text-[11px] font-bold tracking-wider text-[#667085] uppercase mb-1">
+                Account & Cloud Sync
+              </div>
+              <p className="text-xs text-[#667085] leading-relaxed">
+                Sign in with Google to sync option chains and Greeks calculations across devices.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setAuthMode('login');
+                setActiveTab('auth');
+              }}
+              id="sidebar-btn-google-auth"
+              className="w-full flex items-center justify-center gap-2.5 py-2.5 px-3 rounded-xl bg-white hover:bg-[#F8FAFB] text-[#1D2939] border border-[#DCE9EE] hover:border-[#00778A] font-semibold text-xs transition-all shadow-xs cursor-pointer"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
+              </svg>
+              <span>Sign in with Google</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* MCX Commodity Quick Watchlist */}

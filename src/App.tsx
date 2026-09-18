@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGreeksStore, applyTheme } from './store/useGreeksStore';
+import { useAutoPriceSync } from './hooks/useAutoPriceSync';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { Footer } from './components/layout/Footer';
@@ -10,9 +11,21 @@ import { AnalyticsView } from './app/analytics/AnalyticsView';
 import { UploadsView } from './app/uploads/UploadsView';
 import { HistoryView } from './app/history/HistoryView';
 import { SettingsView } from './app/settings/SettingsView';
+import { AuthView } from './app/auth/AuthView';
+import { AuthRouteGuard } from './components/auth/AuthRouteGuard';
+import { useAuthStore } from './store/authStore';
 
 export default function App() {
   const { activeTab, isSimulatingTicks, tickPriceUpdate, settings } = useGreeksStore();
+  const { initSession } = useAuthStore();
+
+  // Restore authenticated session from storage on app load
+  useEffect(() => {
+    initSession();
+  }, [initSession]);
+
+  // Initialize and maintain automatic live gold price loading & 30s auto-refresh
+  useAutoPriceSync();
 
   // Sync theme to DOM on mount and when settings change
   useEffect(() => {
@@ -42,13 +55,31 @@ export default function App() {
       case 'calculator':
         return <CalculatorView />;
       case 'analytics':
-        return <AnalyticsView />;
+        return (
+          <AuthRouteGuard
+            viewId="analytics"
+            viewTitle="Quantitative Analytics & Volatility Surfaces"
+            description="Accessing real-time risk analytics, Monte Carlo curves, and volatility skew surfaces requires an authenticated trader account."
+          >
+            <AnalyticsView />
+          </AuthRouteGuard>
+        );
       case 'uploads':
         return <UploadsView />;
       case 'history':
-        return <HistoryView />;
+        return (
+          <AuthRouteGuard
+            viewId="history"
+            viewTitle="Historical Greeks & Calculation Records"
+            description="Accessing calculation history archives, audit records, and portfolio stress test logs requires an authenticated trader account."
+          >
+            <HistoryView />
+          </AuthRouteGuard>
+        );
       case 'settings':
         return <SettingsView />;
+      case 'auth':
+        return <AuthView />;
       default:
         return <DashboardView />;
     }

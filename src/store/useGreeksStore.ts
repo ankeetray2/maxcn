@@ -28,7 +28,8 @@ export type NavigationTab =
   | 'uploads'
   | 'history'
   | 'api_docs'
-  | 'settings';
+  | 'settings'
+  | 'auth';
 
 export interface OcrDataPayload {
   rawText: string;

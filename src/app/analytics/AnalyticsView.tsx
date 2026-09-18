@@ -140,9 +140,16 @@ export const AnalyticsView: React.FC = () => {
           </div>
 
           {/* Quick Metrics Bar */}
-          <div className="flex items-center gap-4 text-xs font-medium text-[#667085] dark:text-[#8899A6]">
-            <div>
-              Spot: <span className="font-bold text-[#1D2939] dark:text-[#F0F6F9]">₹{price.spotPrice.toLocaleString('en-IN')}</span>
+          <div className="flex items-center gap-4 text-xs font-medium text-[#667085] dark:text-[#8899A6] flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#12B76A] animate-pulse" />
+              <span>Live Spot:</span>{' '}
+              <span className="font-mono font-bold text-[#1D2939] dark:text-[#F0F6F9]">
+                ₹{price.spotPrice.toLocaleString('en-IN')}
+              </span>
+              <span className={`text-[11px] font-semibold ${(price.changePercent ?? 0) >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
+                ({(price.changePercent ?? 0) >= 0 ? '+' : ''}{price.changePercent ?? 0}%)
+              </span>
             </div>
             <div>
               ATM: <span className="font-bold text-[#00778A] dark:text-[#38BDF8]">₹{price.atmStrike.toLocaleString('en-IN')}</span>

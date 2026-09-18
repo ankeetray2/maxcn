@@ -37,8 +37,8 @@ export const GreekCalculationsModal: React.FC<GreekCalculationsModalProps> = ({ 
       volatility: rec.iv,
       expiryDays: rec.expiry,
       contracts: rec.lots,
-      lotSize: rec.lotSize,
-      isCustomLotSize: Boolean(rec.lotSize)
+      lotSize: (rec as any).lotSize,
+      isCustomLotSize: Boolean((rec as any).lotSize)
     });
 
     setManualGreeks({

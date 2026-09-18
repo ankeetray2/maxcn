@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import greeksRoutes from './src/server/routes/greeksRoutes';
 import apiRoutes from './src/server/routes/apiRoutes';
 import priceRoutes from './src/server/routes/priceRoutes';
+import authRoutes from './src/server/routes/authRoutes';
 import { runAllTests } from './src/server/tests/blackScholes.test';
 import { getGreeksRepository } from './src/server/repositories/greeksRepository';
 import { getAppRepository } from './src/server/repositories/appRepository';
@@ -94,7 +95,10 @@ async function startServer() {
   // 3. Smart Commodity Price Ingestion API (/api/price/manual, /api/price/upload-chart, /api/price/upload-option-chain, /api/price/upload-csv, /api/price/latest, /api/price/history)
   app.use('/api/price', priceRoutes);
 
-  // 4. STEP 12 API Endpoints (/api/upload-screenshot, /api/extract-option-chain, /api/calculate-greeks, /api/scenario-analysis, /api/history, /api/analytics, /api/insights)
+  // 4. User Authentication & Google Sign-In (/api/auth/google, /api/auth/register, /api/auth/login, /api/auth/me, /api/auth/logout)
+  app.use('/api/auth', authRoutes);
+
+  // 5. STEP 12 API Endpoints (/api/upload-screenshot, /api/extract-option-chain, /api/calculate-greeks, /api/scenario-analysis, /api/history, /api/analytics, /api/insights)
   app.use('/api', apiRoutes);
 
   // 5. Core Greeks calculation legacy routes

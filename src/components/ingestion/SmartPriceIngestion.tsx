@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGreeksStore } from '../../store/useGreeksStore';
 import { formatCurrency } from '../../utils/greeks';
+import { PriceComparisonCard } from '../common/PriceComparisonCard';
 import {
   DollarSign,
   TrendingUp,
@@ -1044,7 +1045,19 @@ export const SmartPriceIngestion: React.FC = () => {
                     </div>
 
                     {!isEditingChartData ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
+                        {/* Live vs Screenshot Price Comparison */}
+                        <PriceComparisonCard
+                          screenshotPrice={detectedChartData.currentPrice}
+                          sourceLabel="Screenshot"
+                          onApplyScreenshotPrice={() => {
+                            showToast(`Applied screenshot spot price ₹${detectedChartData.currentPrice.toLocaleString('en-IN')}`, 'success');
+                          }}
+                          onKeepLivePrice={() => {
+                            showToast('Maintained live market spot price', 'success');
+                          }}
+                        />
+
                         <div className="p-4 rounded-xl bg-[#F7FAFB] border border-[#DCE9EE] flex items-center justify-between">
                           <div>
                             <div className="text-[11px] font-semibold text-[#667085]">
@@ -1261,6 +1274,18 @@ export const SmartPriceIngestion: React.FC = () => {
 
               {chainResult && (
                 <div className="bg-white p-5 rounded-2xl border border-[#DCE9EE] shadow-xs space-y-4">
+                  {/* Live vs Option Chain Screenshot Price Comparison */}
+                  <PriceComparisonCard
+                    screenshotPrice={chainResult.structuredJson?.spotPrice || 153219}
+                    sourceLabel="Option Chain Screenshot"
+                    onApplyScreenshotPrice={() => {
+                      showToast(`Applied screenshot spot price ₹${(chainResult.structuredJson?.spotPrice || 153219).toLocaleString('en-IN')}`, 'success');
+                    }}
+                    onKeepLivePrice={() => {
+                      showToast('Maintained live market spot price', 'success');
+                    }}
+                  />
+
                   <div className="flex items-center justify-between pb-3 border-b border-[#DCE9EE]">
                     <div>
                       <span className="text-xs font-bold text-[#00778A] uppercase">

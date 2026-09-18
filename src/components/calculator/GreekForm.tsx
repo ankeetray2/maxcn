@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGreeksStore } from '../../store/useGreeksStore';
+import { usePriceStore } from '../../store/priceStore';
 import { COMMODITY_SPECS, getCommoditySpec } from '../../services/mockData';
 import { CommodityType } from '../../types';
 import {
@@ -10,7 +11,9 @@ import {
   Database,
   ArrowRight,
   Sparkles,
-  Sliders
+  Sliders,
+  Zap,
+  RefreshCw
 } from 'lucide-react';
 
 export const GreekForm: React.FC = () => {
@@ -29,7 +32,16 @@ export const GreekForm: React.FC = () => {
     optionChain
   } = useGreeksStore();
 
+  const { currentPrice: liveGoldPrice, isLoading: isPriceLoading } = usePriceStore();
   const [savedToast, setSavedToast] = useState(false);
+
+  // Auto-populate Spot Price on mount or when live price loads
+  useEffect(() => {
+    if (liveGoldPrice && (!calculator.spotPrice || calculator.spotPrice <= 0 || calculator.spotPrice === 153330 || calculator.spotPrice === 71500)) {
+      setCalculatorInput({ spotPrice: liveGoldPrice });
+      runScenarioSimulation();
+    }
+  }, [liveGoldPrice]);
 
   const commodities: CommodityType[] = [
     'GOLD',
@@ -258,27 +270,41 @@ export const GreekForm: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Current Price */}
+        {/* 3. Current Price (Spot Price) */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-bold text-[#1D2939]">
-              Current Price ({settings.currency === 'INR' ? '₹' : '$'})
-            </label>
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs font-bold text-[#1D2939]">
+                Spot Price ({settings.currency === 'INR' ? '₹' : '$'})
+              </label>
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#ECFDF3] text-[#12B76A] border border-[#12B76A]/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A] animate-pulse" />
+                Live
+              </span>
+            </div>
             <button
               type="button"
-              onClick={() => setCalculatorInput({ spotPrice: 153330 })}
-              className="text-[10px] text-[#00778A] hover:underline font-semibold"
+              onClick={() => {
+                setCalculatorInput({ spotPrice: liveGoldPrice || 153330 });
+                runScenarioSimulation();
+              }}
+              className="text-[10px] text-[#00778A] hover:underline font-semibold flex items-center gap-1"
+              title="Re-populate with latest live MCX spot price"
             >
-              Set 153330
+              <RefreshCw className="w-2.5 h-2.5" />
+              <span>Live: ₹{(liveGoldPrice || 153330).toLocaleString('en-IN')}</span>
             </button>
           </div>
-          <input
-            type="number"
-            step="1"
-            value={calculator.spotPrice}
-            onChange={(e) => setCalculatorInput({ spotPrice: parseFloat(e.target.value) || 0 })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
-          />
+          <div className="relative">
+            <input
+              type="number"
+              step="1"
+              value={calculator.spotPrice}
+              onChange={(e) => setCalculatorInput({ spotPrice: parseFloat(e.target.value) || 0 })}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+              placeholder="153330"
+            />
+          </div>
         </div>
 
         {/* 4. Strike */}

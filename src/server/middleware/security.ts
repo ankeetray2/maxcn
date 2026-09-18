@@ -224,7 +224,14 @@ export function validateSpreadsheetFile(payload: {
 // 6. Enterprise Lightweight JWT Authentication
 const JWT_SECRET = process.env.JWT_SECRET || 'commodity_greeks_pro_secret_key';
 
-export function generateJwtToken(payload: { userId: string; username: string; role: string }): string {
+export function generateJwtToken(payload: {
+  userId: string;
+  username: string;
+  role: string;
+  name?: string;
+  email?: string;
+  avatar?: string;
+}): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
   const exp = now + 7 * 24 * 3600; // 7 days

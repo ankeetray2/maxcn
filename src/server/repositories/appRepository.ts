@@ -14,6 +14,8 @@ import {
 
 export interface IAppRepository {
   saveUser(user: Partial<UserDocument>): Promise<UserDocument>;
+  findUserByEmail(email: string): Promise<UserDocument | null>;
+  getUserById(id: string): Promise<UserDocument | null>;
   saveUpload(upload: Omit<UploadDocument, 'id' | 'createdAt'>): Promise<UploadDocument>;
   getUploads(limit?: number): Promise<UploadDocument[]>;
   getUploadById(id: string): Promise<UploadDocument | null>;
@@ -68,14 +70,39 @@ export class MongoAppRepository implements IAppRepository {
 
   async saveUser(user: Partial<UserDocument>): Promise<UserDocument> {
     if (!this.isConnected || !this.db) throw new Error('MongoDB not connected');
-    const doc = {
-      username: user.username || 'trader_' + Math.random().toString(36).substring(7),
+    const doc: any = {
+      username: user.username || (user.email ? user.email.split('@')[0] : 'trader_' + Math.random().toString(36).substring(7)),
+      name: user.name || user.username || 'MCX Trader',
       email: user.email || 'trader@mcx.pro',
+      avatar: user.avatar || '',
       role: user.role || 'trader',
-      createdAt: new Date()
+      authProvider: user.authProvider || 'google',
+      passwordHash: user.passwordHash || '',
+      createdAt: user.createdAt || new Date()
     };
     const res = await this.db.collection('users').insertOne(doc);
     return { ...doc, id: res.insertedId.toString(), _id: res.insertedId.toString() };
+  }
+
+  async findUserByEmail(email: string): Promise<UserDocument | null> {
+    if (!this.isConnected || !this.db) return null;
+    const doc: any = await this.db.collection('users').findOne({ email: email.toLowerCase() });
+    if (!doc) return null;
+    return { ...doc, id: doc._id?.toString() || doc.id };
+  }
+
+  async getUserById(id: string): Promise<UserDocument | null> {
+    if (!this.isConnected || !this.db) return null;
+    try {
+      const query: any = ObjectId.isValid(id)
+        ? { $or: [{ id }, { _id: new ObjectId(id) }] }
+        : { id };
+      const doc: any = await this.db.collection('users').findOne(query);
+      if (!doc) return null;
+      return { ...doc, id: doc._id?.toString() || doc.id };
+    } catch {
+      return null;
+    }
   }
 
   async saveUpload(upload: Omit<UploadDocument, 'id' | 'createdAt'>): Promise<UploadDocument> {
@@ -378,15 +405,30 @@ export class LocalAppRepository implements IAppRepository {
 
   async saveUser(user: Partial<UserDocument>): Promise<UserDocument> {
     const doc: UserDocument = {
-      id: 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(7),
-      username: user.username || 'trader_' + Math.random().toString(36).substring(7),
-      email: user.email || 'trader@mcx.pro',
+      id: user.id || 'usr_' + Date.now() + '_' + Math.random().toString(36).substring(7),
+      username: user.username || (user.email ? user.email.split('@')[0] : 'trader_' + Math.random().toString(36).substring(7)),
+      name: user.name || user.username || 'MCX Trader',
+      email: (user.email || 'trader@mcx.pro').toLowerCase(),
+      avatar: user.avatar || '',
       role: user.role || 'trader',
-      createdAt: new Date()
+      authProvider: user.authProvider || 'google',
+      passwordHash: user.passwordHash || '',
+      createdAt: user.createdAt || new Date()
     };
     this.users.unshift(doc);
     this.persistCollection('users', this.users);
     return doc;
+  }
+
+  async findUserByEmail(email: string): Promise<UserDocument | null> {
+    const target = email.toLowerCase().trim();
+    const found = this.users.find(u => u.email?.toLowerCase() === target);
+    return found || null;
+  }
+
+  async getUserById(id: string): Promise<UserDocument | null> {
+    const found = this.users.find(u => u.id === id || u._id === id);
+    return found || null;
   }
 
   async saveUpload(upload: Omit<UploadDocument, 'id' | 'createdAt'>): Promise<UploadDocument> {

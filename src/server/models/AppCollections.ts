@@ -2,8 +2,12 @@ export interface UserDocument {
   id: string;
   _id?: string;
   username: string;
+  name?: string;
   email: string;
+  avatar?: string;
   role: 'trader' | 'analyst' | 'admin';
+  authProvider?: 'google' | 'email';
+  passwordHash?: string;
   createdAt: Date;
 }
 

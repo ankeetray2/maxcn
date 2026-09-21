@@ -10,6 +10,7 @@ import { GreeksScenarioTable } from '../../components/calculator/GreeksScenarioT
 import { SavedScenariosModal } from '../../components/calculator/SavedScenariosModal';
 import { GreekCalculationsModal } from '../../components/calculator/GreekCalculationsModal';
 import { ScenarioSimulator } from '../../components/calculator/ScenarioSimulator';
+import { GreeksSliderMatrix } from '../../components/calculator/GreeksSliderMatrix';
 import { AdvancedGreeksCharts } from '../../components/charts/AdvancedGreeksCharts';
 import { useGreeksStore } from '../../store/useGreeksStore';
 import {
@@ -376,7 +377,7 @@ export const CalculatorView: React.FC = () => {
 
       {activeVisualizerTab === 'chartsSuite' && <AdvancedGreeksCharts />}
 
-      {activeVisualizerTab === 'sliderMatrix' && <ScenarioSimulator />}
+      {activeVisualizerTab === 'sliderMatrix' && <GreeksSliderMatrix />}
 
       {/* Modals */}
       <GreekCalculationsModal

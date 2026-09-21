@@ -191,6 +191,12 @@ export interface AppSettings {
   deltaAlertThreshold: number;
   vegaAlertThreshold: number;
   theme: 'light' | 'dark' | 'system';
+  defaultCommodity?: CommodityType;
+  chartPreferences?: {
+    showIvSmile: boolean;
+    showGreeks: boolean;
+    showVolume: boolean;
+  };
 }
 
 export interface ScenarioAnalysisRecord {

@@ -1,29 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGreeksStore, NavigationTab } from '../../store/useGreeksStore';
 import { COMMODITY_SPECS } from '../../services/mockData';
 import { CommodityType } from '../../types';
-import { LivePriceNavbarWidget } from '../common/LivePriceNavbarWidget';
+import { usePriceStore } from '../../store/priceStore';
 import { useAuthStore } from '../../store/authStore';
 import {
   LayoutDashboard,
   Calculator,
   LineChart,
-  History,
-  Settings,
   Upload,
-  Sparkles,
+  History,
+  FileText,
+  PieChart,
+  Plus,
+  RefreshCw,
   ChevronDown,
-  Activity,
   ArrowUpRight,
   ArrowDownRight,
-  Database,
   Sun,
   Moon,
   LogIn,
   LogOut,
   User,
   ShieldCheck,
-  Lock
+  Settings,
+  Menu,
+  X
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -32,125 +34,218 @@ export const Navbar: React.FC = () => {
     setActiveTab,
     selectedCommodity,
     setSelectedCommodity,
-    isSimulatingTicks,
-    toggleTickSimulation,
-    databaseStatus,
     settings,
     toggleTheme
   } = useGreeksStore();
 
+  const {
+    currentPrice,
+    change: liveChange,
+    changePercent: liveChangePercent,
+    fetchLatestPrice
+  } = usePriceStore();
+
   const { user, isAuthenticated, logout, setAuthMode } = useAuthStore();
-  const [showUserMenu, setShowUserMenu] = React.useState(false);
+
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const spec = COMMODITY_SPECS[selectedCommodity] || COMMODITY_SPECS.GOLD;
 
+  // Center Navigation Tabs - exactly 7 professional trading terminal views
   const navItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calculator', label: 'Calculator', icon: Calculator },
     { id: 'analytics', label: 'Analytics', icon: LineChart },
     { id: 'uploads', label: 'Price Ingestion', icon: Upload },
     { id: 'history', label: 'History', icon: History },
-    { id: 'settings', label: 'Settings', icon: Settings }
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'portfolio', label: 'Portfolio', icon: PieChart }
   ];
 
-  const commodities: CommodityType[] = [
+  // Top Market Ticker Commodities (Gold, Silver, Crude, Copper, Nickel + Natural Gas, Zinc)
+  const tickerCommodities: CommodityType[] = [
     'GOLD',
     'SILVER',
     'CRUDEOIL',
-    'NATURALGAS',
     'COPPER',
+    'NICKEL',
+    'NATURALGAS',
     'ZINC',
     'ALUMINIUM',
-    'LEAD',
-    'NICKEL'
+    'LEAD'
   ];
 
-  return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-white/85 border-b border-[#DCE9EE] transition-all">
-      {/* Top micro-ticker bar */}
-      <div className="hidden lg:flex items-center justify-between px-6 py-1.5 bg-[#F7FAFB] border-b border-[#DCE9EE]/60 text-xs text-[#667085]">
-        <div className="flex items-center space-x-4 overflow-x-auto py-0.5">
-          <div className="flex items-center gap-2 font-medium text-[#1D2939] whitespace-nowrap">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#12B76A] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#12B76A]"></span>
-            </span>
-            <span className="text-[10px] tracking-wider uppercase font-bold text-[#00778A]">MCX Live Market</span>
-          </div>
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await fetchLatestPrice(spec.name || 'Gold Mini', true);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
-          {commodities.map((c) => {
-            const s = COMMODITY_SPECS[c];
-            const isPos = s.change24h >= 0;
-            return (
-              <button
-                key={c}
-                onClick={() => setSelectedCommodity(c)}
-                className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full transition-all text-[11px] whitespace-nowrap ${
-                  selectedCommodity === c
-                    ? 'bg-[#00778A]/10 text-[#00778A] font-semibold ring-1 ring-[#00778A]/30'
-                    : 'hover:text-[#1D2939] hover:bg-white'
-                }`}
-              >
-                <span className="font-semibold">{s.symbol}</span>
-                <span className="font-mono text-[#1D2939]">
-                  {s.defaultSpot.toLocaleString('en-IN')}
-                </span>
-                <span className={`flex items-center text-[10px] font-medium ${isPos ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
-                  {isPos ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
-                  {isPos ? '+' : ''}{s.change24h}%
-                </span>
-              </button>
-            );
-          })}
+  const handleNewAnalysis = () => {
+    setActiveTab('calculator');
+  };
+
+  // Live Price calculations
+  const effectivePrice = currentPrice || spec.defaultSpot;
+  const isPos = liveChange >= 0;
+
+  return (
+    <header className="sticky top-0 z-50 w-full transition-colors">
+      {/* 1. TOP MARKET TICKER - Exactly 32px height */}
+      <div className="h-[32px] bg-[#08111F] border-b border-slate-800/80 text-slate-300 text-[11px] overflow-hidden flex items-center select-none relative z-20">
+        {/* Fixed Left Badge */}
+        <div className="flex items-center gap-2 pl-4 pr-3 border-r border-slate-800/80 shrink-0 z-10 bg-[#08111F] h-full">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+          </span>
+          <span className="text-[10px] font-black tracking-wider uppercase text-[#0EA5E9]">
+            MCX REALTIME
+          </span>
         </div>
 
-        <div className="flex items-center gap-4 text-[11px] whitespace-nowrap">
-          <div className="flex items-center gap-1 text-[#12B76A]">
-            <Database className="w-3.5 h-3.5" />
-            <span className="font-medium">{databaseStatus.driver === 'mongodb' ? 'MongoDB Engine' : 'Storage Engine'}</span>
+        {/* Gradient fade masks for smooth ticker appearance */}
+        <div className="pointer-events-none absolute left-[125px] top-0 bottom-0 w-6 bg-gradient-to-r from-[#08111F] to-transparent z-10" />
+        <div className="pointer-events-none absolute right-[130px] top-0 bottom-0 w-6 bg-gradient-to-l from-[#08111F] to-transparent z-10 hidden md:block" />
+
+        {/* Continuous Horizontal Scrolling Ticker Track */}
+        <div className="flex-1 overflow-x-auto scrollbar-none flex items-center h-full">
+          <div className="animate-terminal-ticker flex items-center gap-6 py-0.5 whitespace-nowrap pl-4">
+            {/* First sequence of ticker items */}
+            {tickerCommodities.map((c) => {
+              const s = COMMODITY_SPECS[c];
+              const isPositiveChange = s.change24h >= 0;
+              const isSelected = selectedCommodity === c;
+              return (
+                <button
+                  key={`ticker-1-${c}`}
+                  onClick={() => setSelectedCommodity(c)}
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md transition-all text-[11px] cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#0EA5E9]/20 text-[#0EA5E9] font-bold ring-1 ring-[#0EA5E9]/40'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                  title={`Click to analyze ${s.name}`}
+                >
+                  <span className="font-bold tracking-tight">{s.symbol}</span>
+                  <span className="font-mono text-white/90">
+                    ₹{s.defaultSpot.toLocaleString('en-IN')}
+                  </span>
+                  <span
+                    className={`inline-flex items-center text-[10px] font-semibold ${
+                      isPositiveChange ? 'text-[#10B981]' : 'text-[#EF4444]'
+                    }`}
+                  >
+                    {isPositiveChange ? (
+                      <ArrowUpRight className="w-2.5 h-2.5" />
+                    ) : (
+                      <ArrowDownRight className="w-2.5 h-2.5" />
+                    )}
+                    {isPositiveChange ? '+' : ''}
+                    {s.change24h}%
+                  </span>
+                </button>
+              );
+            })}
+
+            {/* Seamless duplicate sequence for infinite ticker loop */}
+            {tickerCommodities.map((c) => {
+              const s = COMMODITY_SPECS[c];
+              const isPositiveChange = s.change24h >= 0;
+              const isSelected = selectedCommodity === c;
+              return (
+                <button
+                  key={`ticker-2-${c}`}
+                  onClick={() => setSelectedCommodity(c)}
+                  className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md transition-all text-[11px] cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#0EA5E9]/20 text-[#0EA5E9] font-bold ring-1 ring-[#0EA5E9]/40'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                  title={`Click to analyze ${s.name}`}
+                >
+                  <span className="font-bold tracking-tight">{s.symbol}</span>
+                  <span className="font-mono text-white/90">
+                    ₹{s.defaultSpot.toLocaleString('en-IN')}
+                  </span>
+                  <span
+                    className={`inline-flex items-center text-[10px] font-semibold ${
+                      isPositiveChange ? 'text-[#10B981]' : 'text-[#EF4444]'
+                    }`}
+                  >
+                    {isPositiveChange ? (
+                      <ArrowUpRight className="w-2.5 h-2.5" />
+                    ) : (
+                      <ArrowDownRight className="w-2.5 h-2.5" />
+                    )}
+                    {isPositiveChange ? '+' : ''}
+                    {s.change24h}%
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <span className="text-[#B5CEDA]">|</span>
-          <button
-            onClick={toggleTickSimulation}
-            className="flex items-center gap-1.5 text-[#00778A] hover:underline"
-            title="Toggle simulated live price updates"
-          >
-            <Activity className={`w-3.5 h-3.5 ${isSimulatingTicks ? 'animate-pulse text-[#12B76A]' : 'text-[#667085]'}`} />
-            <span>Feed: {isSimulatingTicks ? 'Live Streaming' : 'Paused'}</span>
-          </button>
+        </div>
+
+        {/* Fixed Right Terminal Status */}
+        <div className="hidden md:flex items-center gap-2 pl-3 pr-4 border-l border-slate-800/80 shrink-0 z-10 bg-[#08111F] text-[10px] text-slate-400 font-mono h-full">
+          <span className="flex items-center gap-1.5 text-[#10B981]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+            <span>SESSION ACTIVE</span>
+          </span>
         </div>
       </div>
 
-      {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18">
-          {/* Logo Left */}
-          <div className="flex items-center gap-3">
-            <div 
-              onClick={() => setActiveTab('dashboard')}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#00778A] to-[#7A9266] flex items-center justify-center text-white shadow-md shadow-[#00778A]/15 group-hover:scale-105 transition-transform">
-                <span className="font-heading font-extrabold text-lg tracking-tight">Δθ</span>
+      {/* 2. MAIN HEADER - Exactly 72px height, Glassmorphism with backdrop-blur-[20px] */}
+      <div className="h-[72px] w-full backdrop-blur-[20px] bg-[#F8FAFC]/85 dark:bg-[#08111F]/85 border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
+        <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+          {/* LEFT: Logo + Product Name + Subtitle */}
+          <div
+            onClick={() => setActiveTab('dashboard')}
+            className="flex items-center gap-3 shrink-0 cursor-pointer group select-none"
+            id="navbar-brand-logo"
+          >
+            {/* Geometric institutional delta-theta mark */}
+            <div className="w-10 h-10 rounded-[14px] bg-gradient-to-tr from-[#0EA5E9] to-[#0284C7] flex items-center justify-center text-white shadow-md shadow-[#0EA5E9]/20 group-hover:scale-[1.03] transition-transform shrink-0">
+              <svg
+                className="w-5 h-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 19L12 5L20 19H4Z" />
+                <circle cx="12" cy="14" r="2.2" fill="currentColor" />
+              </svg>
+            </div>
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5 leading-tight">
+                <span className="font-heading font-extrabold text-[17px] tracking-tight text-slate-900 dark:text-white">
+                  Commodity Greeks
+                </span>
+                <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider bg-[#0EA5E9]/10 dark:bg-[#0EA5E9]/20 text-[#0EA5E9] border border-[#0EA5E9]/25 rounded-md">
+                  PRO
+                </span>
               </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-heading font-bold text-lg tracking-tight text-[#1D2939]">
-                    Commodity Greeks
-                  </span>
-                  <span className="px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-[#00778A] text-white rounded-md">
-                    PRO
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#667085] hidden sm:block font-medium">
-                  MCX Options Terminal & Volatility Suite
-                </p>
-              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
+                MCX Options & Volatility Terminal
+              </p>
             </div>
           </div>
 
-          {/* Navigation Links Center */}
-          <nav className="hidden md:flex items-center space-x-1 p-1 bg-[#F7FAFB] rounded-[18px] border border-[#DCE9EE]/80">
+          {/* CENTER: Navigation Links (Linear / Stripe Style 16px Rounded Segment) */}
+          <nav
+            aria-label="Main Navigation"
+            className="hidden xl:flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-slate-900/60 rounded-[16px] border border-slate-200/70 dark:border-slate-800/70 backdrop-blur-[10px] shadow-2xs"
+          >
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -158,209 +253,256 @@ export const Navbar: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  id={`nav-tab-${item.id}`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap ${
                     isActive
-                      ? 'bg-white text-[#00778A] shadow-sm shadow-[#00778A]/10 border border-[#DCE9EE]'
-                      : 'text-[#667085] hover:text-[#1D2939] hover:bg-white/60'
+                      ? 'bg-white dark:bg-[#0c1829] text-[#0EA5E9] shadow-xs border border-slate-200/60 dark:border-slate-700/60 font-bold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/50'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#00778A]' : 'text-[#667085]'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#0EA5E9]' : 'text-slate-400 dark:text-slate-500'}`} />
                   <span>{item.label}</span>
-                  {!isAuthenticated && (item.id === 'analytics' || item.id === 'history') && (
-                    <Lock className="w-3 h-3 text-[#667085] opacity-70 ml-0.5" />
-                  )}
                 </button>
               );
             })}
           </nav>
 
-          {/* Right Action: Live Price Widget, Active Commodity & CTA */}
-          <div className="flex items-center gap-2.5">
-            {/* Global Live Price Widget: 🟢 LIVE | Gold Mini | ₹153,330 | Updated 5 sec ago */}
-            <LivePriceNavbarWidget />
-
-            {/* Commodity dropdown selector */}
-            <div className="relative group">
+          {/* RIGHT: Commodity Selector + Compact Live Price + Refresh + New Analysis + User Menu */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Commodity Selector */}
+            <div className="relative group hidden sm:block">
               <select
-                aria-label="Select Commodity"
+                aria-label="Select Active Commodity"
                 value={selectedCommodity}
                 onChange={(e) => setSelectedCommodity(e.target.value as CommodityType)}
-                className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-white border border-[#DCE9EE] text-xs font-semibold text-[#1D2939] hover:border-[#00778A] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 cursor-pointer shadow-xs"
+                className="appearance-none h-9 pl-3 pr-8 rounded-xl bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 shadow-2xs hover:border-[#0EA5E9] dark:hover:border-[#0EA5E9] focus:outline-none focus:ring-2 focus:ring-[#0EA5E9]/20 transition-all cursor-pointer"
+                id="header-commodity-select"
               >
-                {commodities.map((c) => (
+                {tickerCommodities.map((c) => (
                   <option key={c} value={c}>
-                    {COMMODITY_SPECS[c].symbol} ({COMMODITY_SPECS[c].unit})
+                    {COMMODITY_SPECS[c].symbol}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-[#667085] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            {/* Dark Mode Toggle Button */}
+            {/* Compact Live Price Card (Flush & Embedded, No Floating bloat) */}
+            <div
+              className="h-9 px-3 rounded-xl bg-white/90 dark:bg-[#0c1829]/90 border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center gap-2 select-none"
+              title={`Live MCX Spot: ₹${effectivePrice.toLocaleString('en-IN')}`}
+              id="header-compact-price"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase font-mono hidden md:inline-block">
+                  {spec.symbol}
+                </span>
+                <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
+                  ₹{effectivePrice.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <span
+                className={`inline-flex items-center text-[10px] font-bold ${
+                  isPos ? 'text-[#10B981]' : 'text-[#EF4444]'
+                }`}
+              >
+                {isPos ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+                {isPos ? '+' : ''}
+                {liveChangePercent}%
+              </span>
+            </div>
+
+            {/* Dedicated Manual Refresh Button */}
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-slate-800 hover:border-[#0EA5E9] dark:hover:border-[#0EA5E9] text-slate-600 dark:text-slate-400 hover:text-[#0EA5E9] dark:hover:text-[#0EA5E9] shadow-2xs transition-all cursor-pointer disabled:opacity-60"
+              title="Refresh Live MCX Data"
+              aria-label="Refresh Live MCX Data"
+              id="header-refresh-btn"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#0EA5E9]' : ''}`} />
+            </button>
+
+            {/* High-Visibility "New Analysis" CTA (Linear / Stripe Style) */}
+            <button
+              onClick={handleNewAnalysis}
+              className="h-9 px-3.5 rounded-xl bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-xs font-semibold shadow-xs hover:shadow-[#0EA5E9]/25 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+              id="header-new-analysis-btn"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="hidden sm:inline-block">New Analysis</span>
+            </button>
+
+            {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              aria-label="Toggle Dark / Light Theme"
-              className="p-2 rounded-xl bg-white border border-[#DCE9EE] text-[#667085] hover:text-[#00778A] hover:bg-[#F7FAFB] transition-all shadow-xs flex items-center justify-center cursor-pointer"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-slate-800 hover:border-[#0EA5E9] text-slate-600 dark:text-slate-400 hover:text-[#0EA5E9] shadow-2xs transition-all cursor-pointer"
               title={`Active: ${settings.theme.toUpperCase()} mode. Click to toggle.`}
+              aria-label="Toggle Theme"
+              id="header-theme-toggle"
             >
               {settings.theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-[#F59E0B]" />
+                <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-[#00778A]" />
+                <Moon className="w-4 h-4 text-[#0EA5E9]" />
               )}
             </button>
 
-            {/* Quick Upload CTA */}
-            <button
-              onClick={() => setActiveTab('uploads')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-[#00778A] border border-[#DCE9EE] hover:bg-[#F7FAFB] text-xs font-semibold transition-all shadow-xs"
-            >
-              <Upload className="w-3.5 h-3.5 text-[#00778A]" />
-              <span>Upload Chain</span>
-            </button>
-
-            {/* Primary Analysis CTA */}
-            <button
-              onClick={() => setActiveTab('calculator')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#00778A] hover:bg-[#00778A]/90 text-white text-xs font-semibold transition-all shadow-sm shadow-[#00778A]/25"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Start Analysis</span>
-            </button>
-
-            {/* Authentication / User Profile CTA */}
+            {/* User Profile Dropdown Menu */}
             {isAuthenticated && user ? (
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2 p-1.5 rounded-xl bg-white border border-[#DCE9EE] hover:border-[#00778A] transition-all shadow-xs cursor-pointer group"
+                  className="h-9 flex items-center gap-2 pl-1.5 pr-2.5 rounded-xl bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-slate-800 hover:border-[#0EA5E9] shadow-2xs transition-all cursor-pointer select-none"
                   title={`${user.name} (${user.email})`}
+                  id="header-user-profile-btn"
                 >
                   <div className="relative">
                     <img
                       src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`}
                       alt={user.name}
-                      className="w-7 h-7 rounded-lg object-cover bg-gray-100"
+                      className="w-6 h-6 rounded-lg object-cover bg-slate-100 dark:bg-slate-800"
                     />
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#12B76A] border-2 border-white" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#10B981] border-2 border-white dark:border-[#0c1829]" />
                   </div>
-                  <span className="hidden xl:inline-block text-xs font-bold text-[#1D2939] max-w-[90px] truncate">
+                  <span className="hidden 2xl:inline-block text-xs font-bold text-slate-800 dark:text-white max-w-[80px] truncate">
                     {user.name.split(' ')[0]}
                   </span>
-                  <ChevronDown className="w-3 h-3 text-[#667085] group-hover:text-[#00778A]" />
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
                 </button>
 
-                {/* User Dropdown Menu */}
+                {/* Dropdown Menu */}
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#1E293B] border border-[#DCE9EE] dark:border-[#334155] shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
-                    <div className="px-4 py-2.5 border-b border-[#DCE9EE] dark:border-[#334155]">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-[#1D2939] dark:text-white truncate">
-                          {user.name}
-                        </span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#00778A]/10 text-[#00778A] uppercase">
-                          {user.role}
-                        </span>
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {user.name}
+                          </span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#0EA5E9]/10 text-[#0EA5E9] uppercase">
+                            {user.role}
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                          {user.email}
+                        </p>
+                        <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#10B981]">
+                          <ShieldCheck className="w-3 h-3" />
+                          <span>Google Verified Trader</span>
+                        </div>
                       </div>
-                      <p className="text-[11px] font-mono text-[#667085] dark:text-[#94A3B8] truncate">
-                        {user.email}
-                      </p>
-                      <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[#12B76A]">
-                        <ShieldCheck className="w-3 h-3" />
-                        <span>Google Verified Session</span>
+
+                      <div className="p-1 space-y-0.5">
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            setActiveTab('auth');
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 cursor-pointer"
+                        >
+                          <User className="w-3.5 h-3.5 text-[#0EA5E9]" />
+                          <span>Trader Profile & Account</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            setActiveTab('settings');
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 cursor-pointer"
+                        >
+                          <Settings className="w-3.5 h-3.5 text-slate-400" />
+                          <span>Terminal Settings</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            logout();
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#EF4444] hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2 cursor-pointer"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign Out</span>
+                        </button>
                       </div>
                     </div>
-
-                    <div className="p-1 space-y-0.5">
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          setActiveTab('auth');
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#1D2939] dark:text-gray-200 hover:bg-[#F7FAFB] dark:hover:bg-[#334155] flex items-center gap-2 cursor-pointer"
-                      >
-                        <User className="w-3.5 h-3.5 text-[#00778A]" />
-                        <span>View Profile & Account</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          setActiveTab('settings');
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#1D2939] dark:text-gray-200 hover:bg-[#F7FAFB] dark:hover:bg-[#334155] flex items-center gap-2 cursor-pointer"
-                      >
-                        <Settings className="w-3.5 h-3.5 text-[#667085]" />
-                        <span>Trading Settings</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          logout();
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-medium text-[#F04438] hover:bg-[#FEF3F2] dark:hover:bg-red-950/30 flex items-center gap-2 cursor-pointer"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    setAuthMode('login');
-                    setActiveTab('auth');
-                  }}
-                  id="navbar-btn-login"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-[#F8FAFB] text-[#1D2939] border border-[#DCE9EE] hover:border-[#B5CEDA] text-xs font-bold transition-all shadow-xs cursor-pointer"
-                >
-                  <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
-                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" />
-                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z" />
-                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" />
-                  </svg>
-                  <span>Sign In</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setAuthMode('register');
-                    setActiveTab('auth');
-                  }}
-                  id="navbar-btn-register"
-                  className="hidden sm:inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#F0F7F9] hover:bg-[#E3EFF3] text-[#00778A] border border-[#DCE9EE] text-xs font-bold transition-all shadow-xs cursor-pointer"
-                >
-                  <span>Register</span>
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setAuthMode('login');
+                  setActiveTab('auth');
+                }}
+                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-xl bg-white dark:bg-[#0c1829] hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-xs font-semibold shadow-2xs transition-all cursor-pointer"
+                id="header-login-btn"
+              >
+                <LogIn className="w-3.5 h-3.5 text-[#0EA5E9]" />
+                <span className="hidden sm:inline-block">Sign In</span>
+              </button>
             )}
+
+            {/* Mobile Hamburger Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="xl:hidden w-9 h-9 rounded-xl flex items-center justify-center bg-white dark:bg-[#0c1829] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
+              aria-label="Toggle Navigation Menu"
+              id="header-mobile-menu-btn"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
-        {/* Mobile Navigation bar */}
-        <div className="flex md:hidden items-center justify-around py-2 border-t border-[#DCE9EE]/60 overflow-x-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-medium ${
-                  isActive ? 'text-[#00778A] font-bold' : 'text-[#667085]'
-                }`}
+        {/* Responsive Mobile Drawer (Opens below 72px main header) */}
+        {mobileMenuOpen && (
+          <div className="xl:hidden border-b border-slate-200 dark:border-slate-800 bg-[#F8FAFC] dark:bg-[#08111F] px-4 py-3 shadow-xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-150">
+            {/* Mobile Commodity Selection */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 text-xs">
+              <span className="font-semibold text-slate-500">Asset:</span>
+              <select
+                value={selectedCommodity}
+                onChange={(e) => setSelectedCommodity(e.target.value as CommodityType)}
+                className="px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-semibold text-xs"
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#00778A]' : 'text-[#667085]'}`} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
+                {tickerCommodities.map((c) => (
+                  <option key={c} value={c}>
+                    {COMMODITY_SPECS[c].name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Mobile Nav items grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center gap-2 p-2 rounded-xl text-xs font-semibold ${
+                      isActive
+                        ? 'bg-[#0EA5E9] text-white'
+                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

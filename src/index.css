@@ -235,3 +235,22 @@ html.dark body {
 .dark .recharts-tooltip-label {
   color: #F1F5F9 !important;
 }
+
+@keyframes terminalTicker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-terminal-ticker {
+  display: flex;
+  width: max-content;
+  animation: terminalTicker 45s linear infinite;
+}
+
+.animate-terminal-ticker:hover {
+  animation-play-state: paused;
+}

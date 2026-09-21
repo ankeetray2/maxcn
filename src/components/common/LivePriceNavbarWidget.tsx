@@ -15,7 +15,8 @@ export const LivePriceNavbarWidget: React.FC = () => {
     isLoading,
     fetchLatestPrice,
     isAutoRefreshEnabled,
-    autoRefreshInterval
+    autoRefreshInterval,
+    toggleAutoRefresh
   } = usePriceStore();
 
   const { formattedTimeAgo } = useAutoPriceSync();
@@ -54,14 +55,16 @@ export const LivePriceNavbarWidget: React.FC = () => {
         className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-white dark:bg-[#121E2A] border border-[#DCE9EE] dark:border-[#223344] shadow-xs hover:border-[#00778A] dark:hover:border-[#38BDF8] transition-all cursor-pointer select-none group"
         title="Click to view OHLC breakdown & details"
       >
-        {/* Pulsing Status Dot */}
+        {/* Status Dot */}
         <div className="flex items-center gap-1.5">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#12B76A] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#12B76A]"></span>
+            {isAutoRefreshEnabled && (
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#12B76A] opacity-75"></span>
+            )}
+            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isAutoRefreshEnabled ? 'bg-[#12B76A]' : 'bg-[#00778A]'}`}></span>
           </span>
-          <span className="text-[10px] font-extrabold tracking-wider text-[#12B76A] uppercase">
-            LIVE
+          <span className={`text-[10px] font-extrabold tracking-wider uppercase ${isAutoRefreshEnabled ? 'text-[#12B76A]' : 'text-[#00778A] dark:text-[#38BDF8]'}`}>
+            {isAutoRefreshEnabled ? 'LIVE' : 'MCX'}
           </span>
         </div>
 
@@ -90,8 +93,8 @@ export const LivePriceNavbarWidget: React.FC = () => {
         <button
           onClick={handleManualRefresh}
           disabled={isRefreshing}
-          className="p-1.5 rounded-lg text-[#667085] hover:text-[#00778A] dark:hover:text-[#38BDF8] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B] transition-colors ml-1"
-          title="Refresh Price (Auto-refreshes every 30s)"
+          className="p-1.5 rounded-lg text-[#667085] hover:text-[#00778A] dark:hover:text-[#38BDF8] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B] transition-colors ml-1 cursor-pointer"
+          title={isAutoRefreshEnabled ? `Refresh Price (Auto: ${autoRefreshInterval}s)` : "Refresh Price (Manual)"}
           aria-label="Refresh Price"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#00778A]' : ''}`} />
@@ -142,18 +145,33 @@ export const LivePriceNavbarWidget: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-[#DCE9EE] dark:border-[#223344] flex items-center justify-between text-[11px]">
-              <div className="flex items-center gap-1 text-[#667085] dark:text-[#94A3B8]">
-                <Clock className="w-3 h-3" />
-                <span>Auto: {isAutoRefreshEnabled ? `${autoRefreshInterval}s` : 'Off'}</span>
+            <div className="pt-2.5 border-t border-[#DCE9EE] dark:border-[#223344] flex items-center justify-between text-[11px]">
+              <div className="flex items-center gap-1.5 text-[#667085] dark:text-[#94A3B8]">
+                <Clock className="w-3.5 h-3.5 text-[#667085] dark:text-[#94A3B8]" />
+                <span>Auto-Refresh:</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleAutoRefresh();
+                  }}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                    isAutoRefreshEnabled
+                      ? 'bg-[#12B76A]/10 text-[#12B76A] border border-[#12B76A]/30'
+                      : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-slate-700 hover:bg-gray-200'
+                  }`}
+                  title={isAutoRefreshEnabled ? 'Auto-refresh active. Click to close' : 'Auto-refresh closed. Click to activate'}
+                >
+                  {isAutoRefreshEnabled ? `${autoRefreshInterval}s` : 'Closed'}
+                </button>
               </div>
               <button
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="flex items-center gap-1 text-[#00778A] dark:text-[#38BDF8] hover:underline font-semibold"
+                className="flex items-center gap-1 text-[#00778A] dark:text-[#38BDF8] hover:underline font-semibold cursor-pointer"
               >
                 <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span>Refresh Price</span>
+                <span>Refresh</span>
               </button>
             </div>
           </div>

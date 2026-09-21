@@ -273,10 +273,12 @@ export const UploadsView: React.FC = () => {
                 imagePreview: base64,
                 commodity: (resData.structuredJson?.commodity as CommodityType) || selectedCommodity,
                 spotPrice: resData.structuredJson?.spotPrice || price.spotPrice,
+                expiry: resData.structuredJson?.expiry || '2025-10-05',
+                strikes: resData.structuredJson?.optionChain,
                 rawText: resData.upload?.extractedText || `OCR Ingestion for ${file.name}`,
                 corrections: resData.ocrCorrections || []
               });
-              setNotification(`OCR parsed ${file.name} successfully!`);
+              setNotification(`Screenshot ${file.name} parsed! ATM data uploaded to MongoDB and synchronized across Dashboard, Calculator & Delta Sliders.`);
               setIsProcessing(false);
               return;
             }

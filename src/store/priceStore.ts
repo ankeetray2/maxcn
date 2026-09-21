@@ -35,8 +35,27 @@ export interface PriceState {
   setAutoRefreshInterval: (seconds: number) => void;
   toggleAutoRefresh: (enabled?: boolean) => void;
   setManualPrice: (price: number) => void;
+  setIngestedPrice: (priceData: {
+    currentPrice: number;
+    open?: number;
+    high?: number;
+    low?: number;
+    close?: number;
+    commodity?: string;
+    source?: string;
+  }) => void;
   comparePrice: (screenshotPrice: number) => PriceComparisonResult;
 }
+
+const getInitialAutoRefresh = (): boolean => {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('commodity_price_autorefresh_enabled');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+  }
+  return false; // Closed by default
+};
 
 export const usePriceStore = create<PriceState>((set, get) => ({
   // Default institutional baseline values
@@ -54,7 +73,7 @@ export const usePriceStore = create<PriceState>((set, get) => ({
   commodity: 'Gold Mini',
   error: null,
   autoRefreshInterval: 30, // 30 seconds default
-  isAutoRefreshEnabled: true,
+  isAutoRefreshEnabled: getInitialAutoRefresh(),
   lastFetchedAt: null,
   initialFetchCompleted: false,
 
@@ -113,29 +132,30 @@ export const usePriceStore = create<PriceState>((set, get) => ({
         initialFetchCompleted: true
       });
 
-      // Synchronize with Greeks & Option store
+      // Synchronize with Greeks & Option store while respecting Source Priority:
+      // 1. Manual Spot Price Input
+      // 2. Uploaded Screenshot Price
+      // 3. Live Gold Price
       try {
         const greeksStore = useGreeksStore.getState();
         if (greeksStore) {
-          // Update calculator spot price automatically so user doesn't need to type it
-          greeksStore.setCalculatorInput({
-            spotPrice: currentPrice
-          });
-
-          // Update underlying live price metadata in Greeks Store
-          useGreeksStore.setState((state) => ({
-            price: {
-              ...state.price,
-              currentPrice: currentPrice,
-              spotPrice: currentPrice,
-              goldPrice: currentPrice,
-              dayHigh: high,
-              dayLow: low,
-              priceChange: change,
-              changePercent: Number(changePercent.toFixed(2)),
-              timestamp: formattedTime
-            }
-          }));
+          if (greeksStore.spotPriceSource === 'Live Market Price' || !greeksStore.calculator.spotPrice) {
+            greeksStore.setSpotPrice(currentPrice, 'Live Market Price');
+          } else {
+            // Update underlying live price metadata in Greeks Store without overriding user's spot price
+            useGreeksStore.setState((state) => ({
+              price: {
+                ...state.price,
+                currentPrice: currentPrice,
+                goldPrice: currentPrice,
+                dayHigh: high,
+                dayLow: low,
+                priceChange: change,
+                changePercent: Number(changePercent.toFixed(2)),
+                timestamp: formattedTime
+              }
+            }));
+          }
         }
       } catch (syncErr) {
         console.warn('Sync with useGreeksStore completed with notice:', syncErr);
@@ -164,13 +184,21 @@ export const usePriceStore = create<PriceState>((set, get) => ({
   },
 
   setAutoRefreshInterval: (seconds: number) => {
-    set({ autoRefreshInterval: Math.max(5, seconds) });
+    const sec = Math.max(5, seconds);
+    try {
+      localStorage.setItem('commodity_price_autorefresh_interval', String(sec));
+    } catch {}
+    set({ autoRefreshInterval: sec });
   },
 
   toggleAutoRefresh: (enabled?: boolean) => {
-    set((state) => ({
-      isAutoRefreshEnabled: enabled !== undefined ? enabled : !state.isAutoRefreshEnabled
-    }));
+    set((state) => {
+      const next = enabled !== undefined ? enabled : !state.isAutoRefreshEnabled;
+      try {
+        localStorage.setItem('commodity_price_autorefresh_enabled', String(next));
+      } catch {}
+      return { isAutoRefreshEnabled: next };
+    });
   },
 
   setManualPrice: (price: number) => {
@@ -190,7 +218,38 @@ export const usePriceStore = create<PriceState>((set, get) => ({
     }));
 
     try {
-      useGreeksStore.getState().setCalculatorInput({ spotPrice: price });
+      useGreeksStore.getState().setSpotPrice(price, 'Manual Input');
+    } catch {}
+  },
+
+  setIngestedPrice: (priceData) => {
+    const { currentPrice, open, high, low, close, commodity, source } = priceData;
+    if (!currentPrice || currentPrice <= 0 || isNaN(currentPrice)) return;
+    const formattedTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const resolvedOpen = open ?? currentPrice;
+    const resolvedHigh = high ?? Math.max(resolvedOpen, currentPrice);
+    const resolvedLow = low ?? Math.min(resolvedOpen, currentPrice);
+    const resolvedClose = close ?? currentPrice;
+    const change = currentPrice - resolvedOpen;
+    const changePercent = resolvedOpen > 0 ? Number(((change / resolvedOpen) * 100).toFixed(2)) : 0;
+
+    set({
+      currentPrice,
+      open: resolvedOpen,
+      high: resolvedHigh,
+      low: resolvedLow,
+      close: resolvedClose,
+      change,
+      changePercent,
+      commodity: commodity || get().commodity || 'Gold Mini',
+      source: source || 'screenshot',
+      lastUpdated: formattedTime,
+      isLoading: false,
+      lastFetchedAt: Date.now()
+    });
+
+    try {
+      useGreeksStore.getState().setSpotPrice(currentPrice, 'Uploaded Screenshot');
     } catch {}
   },
 

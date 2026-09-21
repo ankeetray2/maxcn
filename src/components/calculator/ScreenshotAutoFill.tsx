@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useGreeksStore } from '../../store/useGreeksStore';
-import { UploadCloud, FileImage, Check, Sparkles, AlertCircle, ArrowRight, Eye, RefreshCw } from 'lucide-react';
+import { UploadCloud, FileImage, Check, Sparkles, AlertCircle, ArrowRight, Eye, RefreshCw, Sliders } from 'lucide-react';
 
 interface ExtractedScreenshotData {
   broker: string;
@@ -107,7 +107,8 @@ export const ScreenshotAutoFill: React.FC = () => {
     setCalculatorInput,
     setMarketGreeks,
     setManualGreeks,
-    runScenarioSimulation
+    runScenarioSimulation,
+    handleUnifiedUpload
   } = useGreeksStore();
 
   const [selectedBroker, setSelectedBroker] = useState<string>('Groww');
@@ -151,6 +152,17 @@ export const ScreenshotAutoFill: React.FC = () => {
       rho: data.rho,
       pop: data.pop,
       premium: data.ltp
+    });
+
+    // 3. Trigger unified upload so MongoDB and all views sync ATM values
+    handleUnifiedUpload({
+      type: 'screenshot',
+      name: `${data.broker}_OptionChain.png`,
+      commodity: 'GOLD',
+      spotPrice: data.spotPrice,
+      expiry: '2025-10-05',
+      rawText: `${data.broker} Terminal Parsing\nSpot: ₹${data.spotPrice}\nATM Strike: ₹${data.strike}\nDelta: ${data.delta}\nGamma: ${data.gamma}\nIV: ${data.iv}%`,
+      corrections: []
     });
 
     runScenarioSimulation();
@@ -368,6 +380,40 @@ export const ScreenshotAutoFill: React.FC = () => {
                 <span className="text-sm font-bold font-mono text-[#475467] dark:text-[#94A3B8]">
                   {extractedData.oi.toLocaleString('en-IN')}
                 </span>
+              </div>
+
+              {/* Interactive Delta Fine-Tuning Slider */}
+              <div className="col-span-2 sm:col-span-4 p-3 rounded-xl bg-[#00778A]/5 dark:bg-[#00778A]/15 border border-[#00778A]/30">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-[#1D2939] dark:text-white">
+                    <Sliders className="w-3.5 h-3.5 text-[#00778A]" />
+                    <span>Delta (Δ) Tuning Slider:</span>
+                  </div>
+                  <span className="font-mono font-bold text-[#00778A] dark:text-[#2DD4BF] bg-white dark:bg-[#1E293B] px-2 py-0.5 rounded-md border border-[#00778A]/20">
+                    Δ {extractedData.delta.toFixed(2)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.99"
+                  step="0.01"
+                  value={extractedData.delta}
+                  onChange={(e) => {
+                    const newDelta = parseFloat(e.target.value);
+                    const updated = { ...extractedData, delta: newDelta };
+                    setExtractedData(updated);
+                    setMarketGreeks({ delta: newDelta });
+                    setManualGreeks({ delta: newDelta });
+                    runScenarioSimulation();
+                  }}
+                  className="w-full accent-[#00778A] h-2 bg-[#DCE9EE] dark:bg-gray-700 rounded-lg cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-[#64748B] mt-1 font-mono">
+                  <span>0.05 Deep OTM</span>
+                  <span>0.50 ATM</span>
+                  <span>0.99 Deep ITM</span>
+                </div>
               </div>
             </div>
           </div>

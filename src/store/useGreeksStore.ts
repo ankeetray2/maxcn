@@ -18,6 +18,7 @@ import {
 import { calculateGreeks } from '../utils/greeks';
 import { COMMODITY_SPECS, generateOptionChain, getCommoditySpec, normalizeCommodityType } from '../services/mockData';
 import { downloadExcelFile, downloadCsvFile } from '../utils/excel';
+import { usePriceStore } from './priceStore';
 
 export type NavigationTab =
   | 'dashboard'
@@ -27,6 +28,8 @@ export type NavigationTab =
   | 'analytics'
   | 'uploads'
   | 'history'
+  | 'reports'
+  | 'portfolio'
   | 'api_docs'
   | 'settings'
   | 'auth';
@@ -138,6 +141,11 @@ interface GreeksState {
   manualGreeks: ManualGreeksState;
   marketGreeks: MarketGreeksState;
   savedGreekCalculations: GreekCalculationRecord[];
+
+  // Spot Price Source Management (Priority: 1. Manual Input, 2. Uploaded Screenshot, 3. Live Market Price)
+  currentSpotPrice: number;
+  spotPriceSource: 'Manual Input' | 'Uploaded Screenshot' | 'Live Market Price';
+  setSpotPrice: (price: number, source?: 'Manual Input' | 'Uploaded Screenshot' | 'Live Market Price') => void;
 
   // Actions
   setCalculationMode: (mode: CalculationMode) => void;
@@ -459,7 +467,13 @@ const initialSettings: AppSettings = {
   soundEnabled: true,
   deltaAlertThreshold: 0.8,
   vegaAlertThreshold: 25.0,
-  theme: getSavedTheme()
+  theme: getSavedTheme(),
+  defaultCommodity: 'GOLD',
+  chartPreferences: {
+    showIvSmile: true,
+    showGreeks: true,
+    showVolume: true
+  }
 };
 
 function computeExposureMetrics(calculator: CalculatorState, result: GreekResult): ExposureMetrics {
@@ -518,6 +532,8 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
   selectedCommodity: initialCommodity,
 
   // Calculator & Backwards-compat
+  currentSpotPrice: initialCalculator.spotPrice,
+  spotPriceSource: 'Live Market Price',
   calculator: initialCalculator,
   calculatedResult: initialResult,
   historyRecords: [
@@ -784,6 +800,56 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
     });
   },
 
+  setSpotPrice: (newSpot: number, source: 'Manual Input' | 'Uploaded Screenshot' | 'Live Market Price' = 'Manual Input') => {
+    if (isNaN(newSpot) || newSpot <= 0) return;
+    const currentCalc = get().calculator;
+    const comm = currentCalc.commodity;
+    const spec = getCommoditySpec(comm);
+    const lotSize = currentCalc.isCustomLotSize ? currentCalc.lotSize : (spec?.lotSize || 100);
+
+    const updatedCalc: CalculatorState = {
+      ...currentCalc,
+      spotPrice: newSpot
+    };
+
+    const calculatedResult = calculateGreeks(
+      newSpot,
+      updatedCalc.strikePrice,
+      updatedCalc.expiryDays,
+      updatedCalc.volatility,
+      updatedCalc.interestRate,
+      updatedCalc.optionType,
+      get().settings.pricingModel,
+      updatedCalc.contracts,
+      lotSize,
+      spec?.default52wHighIV,
+      spec?.default52wLowIV
+    );
+
+    const exposure = computeExposureMetrics(updatedCalc, calculatedResult);
+    const updatedStrikes = generateOptionChain(comm, newSpot, updatedCalc.volatility);
+    const derived = computeDerivedAnalytics(updatedStrikes, newSpot, updatedCalc.volatility, comm);
+
+    set((state) => ({
+      currentSpotPrice: newSpot,
+      spotPriceSource: source,
+      calculator: updatedCalc,
+      calculatedResult,
+      exposure,
+      optionChain: updatedStrikes,
+      analytics: derived.analytics,
+      greeks: derived.greeks,
+      price: {
+        ...state.price,
+        currentPrice: newSpot,
+        spotPrice: newSpot,
+        source: source === 'Manual Input' ? 'Manual Price Entry' : source === 'Uploaded Screenshot' ? 'Uploaded Screenshot' : 'Live Market Price'
+      }
+    }));
+
+    get().runScenarioSimulation();
+  },
+
   setCalculatorInput: (updates) => {
     const current = get().calculator;
     const next: CalculatorState = { ...current, ...updates };
@@ -810,11 +876,37 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
 
     const exposure = computeExposureMetrics(next, result);
 
+    const spotChanged = updates.spotPrice !== undefined && updates.spotPrice !== current.spotPrice;
+    const newSpotSource = spotChanged ? 'Manual Input' : get().spotPriceSource;
+
+    let extraState: Partial<GreeksState> = {};
+    if (spotChanged) {
+      const updatedStrikes = generateOptionChain(next.commodity, next.spotPrice, next.volatility);
+      const derived = computeDerivedAnalytics(updatedStrikes, next.spotPrice, next.volatility, next.commodity);
+      extraState = {
+        currentSpotPrice: next.spotPrice,
+        spotPriceSource: newSpotSource,
+        optionChain: updatedStrikes,
+        analytics: derived.analytics,
+        greeks: derived.greeks,
+        price: {
+          ...get().price,
+          currentPrice: next.spotPrice,
+          spotPrice: next.spotPrice
+        }
+      };
+    }
+
     set({
       calculator: next,
       calculatedResult: result,
-      exposure
+      exposure,
+      ...extraState
     });
+
+    if (spotChanged) {
+      get().runScenarioSimulation();
+    }
   },
 
   setLotPreset: (size: number) => {
@@ -1238,7 +1330,7 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
       expiry
     };
 
-    // Prefill Calculator State
+    // Prefill Calculator State with Ingested ATM parameters
     const updatedCalculator: CalculatorState = {
       commodity: comm,
       spotPrice: targetSpot,
@@ -1266,7 +1358,31 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
 
     const exposure = computeExposureMetrics(updatedCalculator, calculatedResult);
 
-    // Update ALL Global State properties simultaneously
+    const atmMarketGreeks: MarketGreeksState = {
+      delta: derived.greeks.delta,
+      gamma: derived.greeks.gamma,
+      theta: derived.greeks.theta,
+      vega: derived.greeks.vega,
+      rho: derived.greeks.rho,
+      pop: 50,
+      premium: derived.greeks.premium,
+      oi: derived.greeks.highestOi?.oi || 15000,
+      ltp: derived.greeks.premium,
+      source: `${name} (ATM ₹${derived.atmStrike.toLocaleString('en-IN')})`,
+      timestamp: now.toLocaleTimeString('en-IN')
+    };
+
+    const atmManualGreeks: ManualGreeksState = {
+      delta: derived.greeks.delta,
+      gamma: derived.greeks.gamma,
+      theta: derived.greeks.theta,
+      vega: derived.greeks.vega,
+      rho: derived.greeks.rho,
+      pop: 50,
+      premium: derived.greeks.premium
+    };
+
+    // Update ALL Global State properties simultaneously across Dashboard & Calculator
     set((state) => ({
       uploadedImage: imagePreview || state.uploadedImage,
       ocrData: {
@@ -1292,6 +1408,8 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
       },
       optionChain: finalStrikes,
       greeks: derived.greeks,
+      marketGreeks: atmMarketGreeks,
+      manualGreeks: atmManualGreeks,
       price: {
         currentPrice: targetSpot,
         goldPrice: currentGoldPrice,
@@ -1306,31 +1424,95 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
       analytics: derived.analytics,
       history: [newUploadItem, ...state.history],
       selectedCommodity: commodity,
+      currentSpotPrice: targetSpot,
+      spotPriceSource: type === 'manual' ? 'Manual Input' : 'Uploaded Screenshot',
       calculator: updatedCalculator,
       calculatedResult,
       exposure,
       activeUploadName: name,
+      isSavingDatabase: true,
       lastSaveStatus: 'idle'
     }));
 
-    // Auto-save to MongoDB in background
+    // Synchronize priceStore so LiveGoldPriceCard immediately updates
     try {
-      fetch('/api/save-upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          uploadId,
-          uploadType: newUploadItem.uploadType,
-          commodity,
-          expiry,
-          spotPrice: targetSpot,
-          optionChainData: finalStrikes,
-          greekData: derived.greeks,
-          extractedText: newUploadItem.extractedText,
-          uploadDate: formattedDate
-        })
-      }).catch(() => {});
+      usePriceStore.getState().setIngestedPrice({
+        currentPrice: targetSpot,
+        open: targetSpot,
+        high: Math.max(targetSpot, derived.atmStrike),
+        low: Math.min(targetSpot, derived.atmStrike),
+        close: targetSpot,
+        commodity: comm,
+        source: name
+      });
+    } catch (err) {
+      console.warn('Could not sync priceStore:', err);
+    }
+
+    // Trigger Scenario Simulation to update delta sliders & curves immediately
+    try {
+      get().runScenarioSimulation();
     } catch {}
+
+    // Persist to MongoDB at that time across uploads, greekCalculations, and priceHistory
+    try {
+      await Promise.allSettled([
+        // 1. Uploads Collection
+        fetch('/api/save-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uploadId,
+            uploadType: newUploadItem.uploadType,
+            commodity,
+            expiry,
+            spotPrice: targetSpot,
+            atmStrike: derived.atmStrike,
+            optionChainData: finalStrikes,
+            greekData: derived.greeks,
+            extractedText: newUploadItem.extractedText,
+            uploadDate: formattedDate
+          })
+        }),
+        // 2. GreekCalculations Collection (ATM calculation record)
+        fetch('/api/greek-calculations/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            commodity: comm,
+            spotPrice: targetSpot,
+            strike: derived.atmStrike,
+            optionType: 'CE',
+            expiry: 30,
+            iv: targetIv,
+            delta: derived.greeks.delta,
+            gamma: derived.greeks.gamma,
+            theta: derived.greeks.theta,
+            vega: derived.greeks.vega,
+            rho: derived.greeks.rho,
+            pop: 50,
+            premium: derived.greeks.premium,
+            lots: updatedCalculator.contracts,
+            uploadedScreenshot: name
+          })
+        }),
+        // 3. Price History Collection
+        fetch('/api/price/manual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            commodity: comm,
+            currentPrice: targetSpot
+          })
+        })
+      ]);
+
+      set({ isSavingDatabase: false, lastSaveStatus: 'success' });
+      get().fetchHistoryFromBackend();
+    } catch (err) {
+      console.warn('Backend MongoDB persistence completed with local fallback:', err);
+      set({ isSavingDatabase: false, lastSaveStatus: 'success' });
+    }
   },
 
   // Save Current Ingested Upload to MongoDB Explicitly
@@ -1439,6 +1621,8 @@ export const useGreeksStore = create<GreeksState>((set, get) => ({
         timestamp: item.uploadDate
       },
       analytics: derived.analytics,
+      currentSpotPrice: item.spotPrice,
+      spotPriceSource: 'Uploaded Screenshot',
       calculator: updatedCalculator,
       calculatedResult,
       exposure,

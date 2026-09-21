@@ -24,7 +24,7 @@ export default function App() {
     initSession();
   }, [initSession]);
 
-  // Initialize and maintain automatic live gold price loading & 30s auto-refresh
+  // Initialize and synchronize underlying live commodity price
   useAutoPriceSync();
 
   // Sync theme to DOM on mount and when settings change
@@ -67,6 +67,7 @@ export default function App() {
       case 'uploads':
         return <UploadsView />;
       case 'history':
+      case 'reports':
         return (
           <AuthRouteGuard
             viewId="history"
@@ -74,6 +75,16 @@ export default function App() {
             description="Accessing calculation history archives, audit records, and portfolio stress test logs requires an authenticated trader account."
           >
             <HistoryView />
+          </AuthRouteGuard>
+        );
+      case 'portfolio':
+        return (
+          <AuthRouteGuard
+            viewId="analytics"
+            viewTitle="Quantitative Portfolio & Volatility Analytics"
+            description="Accessing real-time portfolio risk analytics, sensitivity stress tests, and exposure requires an authenticated trader account."
+          >
+            <AnalyticsView />
           </AuthRouteGuard>
         );
       case 'settings':
@@ -95,7 +106,7 @@ export default function App() {
       <Navbar />
 
       {/* Main Trading Platform Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-20 sm:pb-24">
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Left Sidebar */}
           <Sidebar />

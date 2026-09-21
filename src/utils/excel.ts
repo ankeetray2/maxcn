@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
 import { OptionChainStrike } from '../types';
 
 export interface ExcelStrikeRow {
@@ -180,6 +181,7 @@ export interface GreeksReportExportData {
   optionType: 'CE' | 'PE';
   expiry: number;
   iv: number;
+  rate?: number;
   lots: number;
   lotSize: number;
   mode: string;
@@ -366,9 +368,183 @@ export function exportGreeksReportCsv(data: GreeksReportExportData): void {
 }
 
 /**
- * Trigger clean institutional styled PDF printable report
+ * Direct PDF download using jsPDF for Commodity Greeks Pro
+ */
+export function exportGreeksReportPdf(data: GreeksReportExportData): void {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  // Header Banner
+  doc.setFillColor(0, 119, 138); // #00778A
+  doc.rect(0, 0, 210, 24, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('COMMODITY GREEKS PRO', 14, 11);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Institutional Options Risk & Scenario Analysis Report', 14, 18);
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 155, 18);
+
+  // Section 1: Core Trade Parameters
+  doc.setTextColor(29, 41, 57);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Trade & Underwriting Parameters', 14, 32);
+
+  doc.setDrawColor(220, 233, 238);
+  doc.line(14, 34, 196, 34);
+
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  const col1X = 14;
+  const col2X = 75;
+  const col3X = 140;
+
+  doc.text(`Commodity: ${data.commodity}`, col1X, 40);
+  doc.text(`Spot Price: ₹${data.spotPrice.toLocaleString('en-IN')}`, col1X, 46);
+  doc.text(`Strike Price: ₹${data.strike.toLocaleString('en-IN')}`, col1X, 52);
+
+  doc.text(`Option Type: ${data.optionType}`, col2X, 40);
+  doc.text(`Expiry Days: ${data.expiry} Days`, col2X, 46);
+  doc.text(`Implied Volatility: ${data.iv}%`, col2X, 52);
+
+  doc.text(`Interest Rate: ${data.rate ?? 6.5}%`, col3X, 40);
+  doc.text(`Lot Size: ${data.lotSize || 100}`, col3X, 46);
+  doc.text(`Contracts: ${data.lots || 1}`, col3X, 52);
+
+  // Section 2: Greeks & Valuation Matrix
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Options Greeks & Moneyness Matrix', 14, 62);
+  doc.line(14, 64, 196, 64);
+
+  const cg = data.calculatedGreeks;
+  const metrics = [
+    { label: 'Delta (Δ)', val: cg.delta.toFixed(4) },
+    { label: 'Gamma (Γ)', val: cg.gamma.toFixed(6) },
+    { label: 'Theta (θ)', val: `₹${cg.theta.toFixed(2)}` },
+    { label: 'Vega (ν)', val: `₹${cg.vega.toFixed(2)}` },
+    { label: 'Rho (ρ)', val: `₹${cg.rho.toFixed(2)}` },
+    { label: 'Premium', val: `₹${cg.premium.toFixed(2)}` },
+    { label: 'POP', val: `${cg.pop.toFixed(2)}%` },
+    { label: 'Breakeven', val: `₹${cg.breakeven.toLocaleString('en-IN')}` },
+  ];
+
+  const cardX = 14;
+  const cardY = 68;
+  const cardW = 42;
+  const cardH = 13;
+
+  metrics.forEach((m, idx) => {
+    const rx = cardX + (idx % 4) * 46;
+    const ry = cardY + Math.floor(idx / 4) * 16;
+
+    doc.setFillColor(247, 250, 251);
+    doc.setDrawColor(220, 233, 238);
+    doc.roundedRect(rx, ry, cardW, cardH, 2, 2, 'FD');
+
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(100, 116, 139);
+    doc.text(m.label, rx + 3, ry + 4.5);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 119, 138);
+    doc.text(m.val, rx + 3, ry + 10);
+  });
+
+  // Section 3: Scenario Matrix Table
+  doc.setTextColor(29, 41, 57);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Spot Price Scenario Sensitivity Matrix (-2,000 to +2,000 Points)', 14, 107);
+  doc.line(14, 109, 196, 109);
+
+  // Table header
+  doc.setFillColor(0, 119, 138);
+  doc.rect(14, 113, 182, 7, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+
+  doc.text('Shift', 17, 118);
+  doc.text('New Spot', 38, 118);
+  doc.text('Premium', 64, 118);
+  doc.text('Delta (Δ)', 88, 118);
+  doc.text('Gamma (Γ)', 112, 118);
+  doc.text('Theta (θ)', 138, 118);
+  doc.text('Vega (ν)', 160, 118);
+  doc.text('P&L (₹)', 180, 118);
+
+  // Rows
+  let tableY = 120;
+  data.scenarioRows.forEach((s, i) => {
+    if (tableY > 275) {
+      doc.addPage();
+      tableY = 20;
+    }
+    const bgFill = i % 2 === 0 ? 255 : 248;
+    doc.setFillColor(bgFill, bgFill, bgFill);
+    doc.rect(14, tableY, 182, 6, 'F');
+
+    doc.setTextColor(29, 41, 57);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+
+    const shiftStr = (s.priceMove >= 0 ? '+' : '') + s.priceMove.toLocaleString('en-IN');
+    doc.text(shiftStr, 17, tableY + 4.2);
+    doc.text(`₹${s.newPrice.toLocaleString('en-IN')}`, 38, tableY + 4.2);
+    doc.text(`₹${s.premium.toFixed(2)}`, 64, tableY + 4.2);
+    doc.text(s.delta.toFixed(4), 88, tableY + 4.2);
+    doc.text(s.gamma.toFixed(6), 112, tableY + 4.2);
+    doc.text(`₹${s.theta.toFixed(2)}`, 138, tableY + 4.2);
+    doc.text(`₹${s.vega.toFixed(2)}`, 160, tableY + 4.2);
+
+    if (s.pnl > 0) {
+      doc.setTextColor(18, 183, 106);
+    } else if (s.pnl < 0) {
+      doc.setTextColor(240, 68, 56);
+    } else {
+      doc.setTextColor(100, 116, 139);
+    }
+    doc.setFont('helvetica', 'bold');
+    const pnlStr = (s.pnl >= 0 ? '+' : '') + `₹${s.pnl.toLocaleString('en-IN')}`;
+    doc.text(pnlStr, 180, tableY + 4.2);
+
+    tableY += 6;
+  });
+
+  // Footer
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(148, 163, 184);
+  doc.text(
+    'Commodity Greeks Pro • Black-Scholes Model with Cost-of-Carry • For Active Trading Risk Management',
+    14,
+    290
+  );
+
+  const cleanCommodity = data.commodity.replace(/\s+/g, '_');
+  doc.save(`${cleanCommodity}_${data.strike}_${data.optionType}_Report.pdf`);
+}
+
+/**
+ * Trigger clean institutional styled PDF printable report and direct PDF download
  */
 export function printOrDownloadPdfReport(data: GreeksReportExportData): void {
+  // Always trigger direct jsPDF file save
+  try {
+    exportGreeksReportPdf(data);
+  } catch (err) {
+    console.error('jsPDF export error, falling back to print dialog:', err);
+  }
+
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 

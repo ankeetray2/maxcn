@@ -200,6 +200,7 @@ export const HistoryView: React.FC = () => {
                   <th className="py-3 px-4">Price</th>
                   <th className="py-3 px-4 text-center">Strikes</th>
                   <th className="py-3 px-4">Greeks</th>
+                  <th className="py-3 px-4">Type</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -212,9 +213,6 @@ export const HistoryView: React.FC = () => {
                     {/* Upload Date */}
                     <td className="py-3.5 px-4 text-[#1D2939] dark:text-[#F0F6F9]">
                       <div className="font-semibold text-xs">{item.uploadDate}</div>
-                      <div className="text-[10px] text-[#667085] dark:text-[#8899A6] truncate max-w-[150px]">
-                        {item.uploadType}
-                      </div>
                     </td>
 
                     {/* Commodity */}
@@ -242,6 +240,13 @@ export const HistoryView: React.FC = () => {
                       <div className="font-mono text-[11px] px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-teal-950/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/40 inline-block">
                         {item.greeks}
                       </div>
+                    </td>
+
+                    {/* Type */}
+                    <td className="py-3.5 px-4">
+                      <span className="inline-block px-2 py-0.5 rounded font-medium text-[10px] bg-gray-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700">
+                        {item.uploadType}
+                      </span>
                     </td>
 
                     {/* Actions: View, Download Excel, Delete */}

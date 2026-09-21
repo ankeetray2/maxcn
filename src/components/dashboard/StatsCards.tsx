@@ -25,21 +25,21 @@ export const StatsCards: React.FC = () => {
       id: 'gold_price',
       title: 'Current Gold Price',
       value: `₹${price.goldPrice.toLocaleString('en-IN')}`,
-      subtext: selectedCommodity === 'GOLD' ? 'Active underlying spot' : `Spot benchmark (${price.changePercent > 0 ? '+' : ''}${price.changePercent}%)`,
+      subtext: selectedCommodity === 'GOLD' ? 'Active underlying spot' : 'Spot benchmark',
       badge: 'MCX Live',
       badgeColor: 'text-[#E3A008] bg-[#FEF08A]/20 border border-[#E3A008]/30',
       icon: Coins,
       accentColor: '#D97706'
     },
     {
-      id: 'total_strikes',
-      title: 'Total Strikes',
-      value: `${price.totalStrikes}`,
-      subtext: 'Indexed in active matrix',
-      badge: 'Synchronized',
-      badgeColor: 'text-[#00778A] dark:text-[#38BDF8] bg-[#00778A]/10 border border-[#00778A]/20',
-      icon: Layers,
-      accentColor: '#00778A'
+      id: 'price_change',
+      title: 'Change / % Change',
+      value: `${price.change >= 0 ? '+' : ''}₹${Math.abs(price.change).toLocaleString('en-IN')}`,
+      subtext: `${price.changePercent >= 0 ? '+' : ''}${price.changePercent}% session movement`,
+      badge: price.change >= 0 ? 'Bullish' : 'Bearish',
+      badgeColor: price.change >= 0 ? 'text-[#12B76A] bg-[#12B76A]/10 border border-[#12B76A]/20' : 'text-[#F04438] bg-[#F04438]/10 border border-[#F04438]/20',
+      icon: price.change >= 0 ? ArrowUpRight : Zap,
+      accentColor: price.change >= 0 ? '#12B76A' : '#F04438'
     },
     {
       id: 'atm_strike',
@@ -89,6 +89,16 @@ export const StatsCards: React.FC = () => {
       badge: greeks.pcr > 1.2 ? 'Bullish' : greeks.pcr < 0.8 ? 'Bearish' : 'Neutral',
       badgeColor: greeks.pcr > 1.2 ? 'text-[#12B76A] bg-[#12B76A]/10' : greeks.pcr < 0.8 ? 'text-[#F04438] bg-[#F04438]/10' : 'text-[#667085] bg-gray-100 dark:bg-slate-800',
       icon: Percent,
+      accentColor: '#00778A'
+    },
+    {
+      id: 'max_pain',
+      title: 'Max Pain',
+      value: `₹${(greeks.maxPain || price.atmStrike).toLocaleString('en-IN')}`,
+      subtext: 'Lowest cumulative payout strike',
+      badge: 'Expiry Magnet',
+      badgeColor: 'text-[#00778A] dark:text-[#38BDF8] bg-[#00778A]/10 border border-[#00778A]/20',
+      icon: Target,
       accentColor: '#00778A'
     },
     {

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useGreeksStore } from '../../store/useGreeksStore';
+import { calculateGreeks } from '../../utils/greeks';
 import {
   TrendingUp,
   Percent,
@@ -24,7 +25,7 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
   futurePremium,
   simulatedSpot
 }) => {
-  const { calculatedResult, manualGreeks, calculationMode, calculator } = useGreeksStore();
+  const { calculatedResult, manualGreeks, calculationMode, calculator, spotPriceSource, currentSpotPrice, settings } = useGreeksStore();
 
   const isManual = calculationMode === 'manual';
   const effectiveDelta = isManual ? manualGreeks.delta : calculatedResult.delta;
@@ -35,7 +36,27 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
   const effectivePop = isManual ? manualGreeks.pop : calculatedResult.pop;
   const currentPremium = isManual ? manualGreeks.premium : calculatedResult.price;
 
-  const displayFuturePremium = futurePremium !== undefined ? futurePremium : currentPremium;
+  const currentSpot = currentSpotPrice || calculator.spotPrice;
+  const targetFutureSpot = simulatedSpot !== undefined ? simulatedSpot : Math.max(0.01, currentSpot + expectedMovePoints);
+
+  // Fresh Black-Scholes calculation for Future Spot to ensure it is never identical when move is non-zero
+  const freshlyCalculatedFutureGreeks = useMemo(() => {
+    return calculateGreeks(
+      targetFutureSpot,
+      calculator.strikePrice,
+      calculator.expiryDays,
+      calculator.volatility,
+      calculator.interestRate,
+      calculator.optionType,
+      settings?.pricingModel || 'BLACK_SCHOLES',
+      calculator.contracts,
+      calculator.lotSize
+    );
+  }, [targetFutureSpot, calculator, settings?.pricingModel]);
+
+  const displayFuturePremium = futurePremium !== undefined
+    ? futurePremium
+    : freshlyCalculatedFutureGreeks.price;
   const premiumChange = displayFuturePremium - currentPremium;
 
   return (
@@ -56,8 +77,8 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
             ₹{currentPremium.toFixed(2)}
           </div>
           <div className="mt-1 text-xs text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
-            <span>Spot: ₹{calculator.spotPrice.toLocaleString('en-IN')}</span>
-            <span>Lots: {calculator.contracts} × {calculator.lotSize}</span>
+            <span>Spot: ₹{Math.round(currentSpot).toLocaleString('en-IN')}</span>
+            <span className="text-[10px] font-medium text-[#00778A] dark:text-[#2DD4BF]">{spotPriceSource}</span>
           </div>
         </div>
 
@@ -78,7 +99,7 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
           </div>
           <div className="mt-1 text-xs flex items-center justify-between">
             <span className="text-[#64748B] dark:text-[#94A3B8]">
-              New Spot: ₹{(simulatedSpot || (calculator.spotPrice + expectedMovePoints)).toLocaleString('en-IN')}
+              Future Spot: ₹{Math.round(targetFutureSpot).toLocaleString('en-IN')}
             </span>
             <span className={`font-mono font-semibold ${premiumChange >= 0 ? 'text-[#12B76A]' : 'text-[#D92D20]'}`}>
               {premiumChange >= 0 ? `+₹${premiumChange.toFixed(2)}` : `-₹${Math.abs(premiumChange).toFixed(2)}`}
@@ -95,7 +116,7 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
             <ShieldCheck className="w-3.5 h-3.5 text-[#12B76A]" />
           </div>
           <div className="text-2xl font-bold font-mono text-[#12B76A] dark:text-[#4ADE80] tracking-tight">
-            {effectivePop}%
+            {effectivePop.toFixed(2)}%
           </div>
           <div className="mt-1 text-xs text-[#64748B] dark:text-[#94A3B8]">
             Breakeven Spot: ₹{calculatedResult.breakeven.toLocaleString('en-IN')}
@@ -125,7 +146,7 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
         </div>
       </div>
 
-      {/* Greeks Grid: Delta, Gamma, Theta, Vega, Rho */}
+      {/* Greeks Grid: Delta (4 dec), Gamma (6 dec), Theta (2 dec), Vega (2 dec), Rho (2 dec) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
         {/* Delta */}
         <div className="bg-white/90 dark:bg-[#101828]/90 backdrop-blur-md p-3.5 rounded-xl border border-[#DCE9EE] dark:border-[#1E293B] hover:border-[#00778A]/40 transition-colors">
@@ -134,7 +155,7 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
             <Activity className="w-3.5 h-3.5 text-[#00778A]" />
           </div>
           <div className="text-xl font-bold font-mono text-[#00778A] dark:text-[#2DD4BF]">
-            {effectiveDelta.toFixed(2)}
+            {effectiveDelta.toFixed(4)}
           </div>
           <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-1 line-clamp-1">
             Per ₹1 spot change
@@ -148,7 +169,7 @@ export const AdvancedGreeksResults: React.FC<AdvancedGreeksResultsProps> = ({
             <TrendingUp className="w-3.5 h-3.5 text-[#1D2939] dark:text-white" />
           </div>
           <div className="text-xl font-bold font-mono text-[#1D2939] dark:text-white">
-            {effectiveGamma.toFixed(4)}
+            {effectiveGamma.toFixed(6)}
           </div>
           <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8] mt-1 line-clamp-1">
             Delta sensitivity per ₹1

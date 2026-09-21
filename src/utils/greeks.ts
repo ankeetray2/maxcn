@@ -258,3 +258,112 @@ export function formatGreek(val: number, precision = 4, showSign = true): string
   const prefix = showSign && val > 0 ? '+' : '';
   return `${prefix}${val.toFixed(precision)}`;
 }
+
+/**
+ * Inverse of the standard normal cumulative distribution function (Probit function): N^-1(p)
+ * Uses Acklam's lower-relative-error rational approximation (error < 1.15e-9).
+ */
+export function invNormalCdf(p: number): number {
+  if (isNaN(p) || p <= 0) return -8.0;
+  if (p >= 1) return 8.0;
+
+  // Coefficients in rational approximations
+  const a = [
+    -3.969683028665376e+01,
+     2.209460984245205e+02,
+    -2.759285104469687e+02,
+     1.383577518672690e+02,
+    -3.066479806614716e+01,
+     2.506628277459239e+00
+  ];
+  const b = [
+    -5.447609879822406e+01,
+     1.615858368580409e+02,
+    -1.556989798598866e+02,
+     6.680131188771972e+01,
+    -1.328068155288572e+01
+  ];
+  const c = [
+    -7.784894002430293e-03,
+    -3.223964580411365e-01,
+    -2.400758277161838e+00,
+    -2.549732539343734e+00,
+     4.374664141464968e+00,
+     2.938163982698783e+00
+  ];
+  const d = [
+     7.784695709041462e-03,
+     3.224671290700398e-01,
+     2.445134137142996e+00,
+     3.754408661907416e+00
+  ];
+
+  const p_low = 0.02425;
+  const p_high = 1.0 - p_low;
+
+  if (p < p_low) {
+    const q = Math.sqrt(-2.0 * Math.log(p));
+    return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+           ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0);
+  } else if (p <= p_high) {
+    const q = p - 0.5;
+    const r = q * q;
+    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+           (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0);
+  } else {
+    const q = Math.sqrt(-2.0 * Math.log(1.0 - p));
+    return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+            ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0);
+  }
+}
+
+/**
+ * Inverts the Black-Scholes Delta formula to find the exact underlying spot price (S)
+ * that produces a desired target Delta.
+ *
+ * For CALL options:
+ *   Delta = N(d1) in (0, 1)
+ *   d1 = invNormalCdf(Delta)
+ *   Since d1 = [ln(S/K) + (r + sigma^2 / 2)*T] / (sigma * sqrt(T))
+ *   => S = K * exp(d1 * sigma * sqrt(T) - (r + sigma^2 / 2)*T)
+ *
+ * For PUT options:
+ *   Delta = N(d1) - 1 in (-1, 0)
+ *   N(d1) = 1 + Delta
+ *   d1 = invNormalCdf(1 + Delta)
+ *   => S = K * exp(d1 * sigma * sqrt(T) - (r + sigma^2 / 2)*T)
+ */
+export function spotForTargetDelta(
+  targetDelta: number,
+  K: number,
+  days: number,
+  vol: number,
+  rate: number,
+  type: OptionType
+): number {
+  const strike = Math.max(0.0001, K);
+  const sigma = Math.max(0.0001, vol / 100);
+  const r = rate / 100;
+  const T = Math.max(0.0001, days / 365.0);
+  const sqrtT = Math.sqrt(T);
+
+  let p: number;
+  if (type === 'CALL') {
+    const d = Math.abs(targetDelta);
+    p = Math.max(0.001, Math.min(0.999, d));
+  } else {
+    // If user provided negative target delta (-0.95 to -0.05), N(d1) = 1 + targetDelta
+    // If user provided positive magnitude (0.05 to 0.95), N(d1) = 1 - magnitude
+    if (targetDelta < 0) {
+      p = Math.max(0.001, Math.min(0.999, 1.0 + targetDelta));
+    } else {
+      p = Math.max(0.001, Math.min(0.999, 1.0 - targetDelta));
+    }
+  }
+
+  const d1 = invNormalCdf(p);
+  const drift = (r + 0.5 * sigma * sigma) * T;
+  const lnSK = d1 * sigma * sqrtT - drift;
+  const spot = strike * Math.exp(lnSK);
+  return Math.max(0.01, spot);
+}

@@ -27,8 +27,13 @@ export const ResultCards: React.FC = () => {
   // Scenario stress sliders
   const [spotOffsetPercent, setSpotOffsetPercent] = useState<number>(0);
   const [ivOffsetPercent, setIvOffsetPercent] = useState<number>(0);
+  const [deltaShift, setDeltaShift] = useState<number>(0);
 
-  const simulatedSpot = calculator.spotPrice * (1 + spotOffsetPercent / 100);
+  const deltaSpotAdjustment = calculatedResult.gamma > 0.000001
+    ? (deltaShift / calculatedResult.gamma)
+    : (deltaShift * 1000);
+
+  const simulatedSpot = Math.max(1, (calculator.spotPrice * (1 + spotOffsetPercent / 100)) + deltaSpotAdjustment);
   const simulatedIV = Math.max(1, calculator.volatility + ivOffsetPercent);
 
   const scenarioResult = calculateGreeks(
@@ -260,27 +265,28 @@ export const ResultCards: React.FC = () => {
               Instant What-If Sensitivity Tester
             </h4>
           </div>
-          {(spotOffsetPercent !== 0 || ivOffsetPercent !== 0) && (
+          {(spotOffsetPercent !== 0 || ivOffsetPercent !== 0 || deltaShift !== 0) && (
             <button
               onClick={() => {
                 setSpotOffsetPercent(0);
                 setIvOffsetPercent(0);
+                setDeltaShift(0);
               }}
-              className="text-[11px] text-[#00778A] hover:underline font-semibold"
+              className="text-[11px] text-[#00778A] hover:underline font-semibold cursor-pointer"
             >
               Reset Sensitivity
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Spot Price Shift Slider */}
           <div>
             <div className="flex justify-between text-xs font-semibold mb-2">
               <span className="text-[#1D2939]">Underlying Spot Shift:</span>
               <span className={`font-mono font-bold ${spotOffsetPercent > 0 ? 'text-[#12B76A]' : spotOffsetPercent < 0 ? 'text-[#F04438]' : 'text-[#667085]'}`}>
                 {spotOffsetPercent > 0 ? `+${spotOffsetPercent}%` : `${spotOffsetPercent}%`}
-                {' '}({formatCurrency(simulatedSpot, settings.currency, 1)})
+                {' '}({formatCurrency(simulatedSpot, settings.currency, 0)})
               </span>
             </div>
             <input
@@ -292,10 +298,35 @@ export const ResultCards: React.FC = () => {
               onChange={(e) => setSpotOffsetPercent(parseFloat(e.target.value))}
               className="w-full accent-[#00778A] h-2 bg-[#DCE9EE] rounded-lg cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-[#667085] mt-1">
+            <div className="flex justify-between text-[10px] text-[#667085] mt-1 font-mono">
               <span>-15% Shock</span>
-              <span>0% Baseline</span>
+              <span>Baseline</span>
               <span>+15% Rally</span>
+            </div>
+          </div>
+
+          {/* Delta (Δ) Sensitivity Slider */}
+          <div>
+            <div className="flex justify-between text-xs font-semibold mb-2">
+              <span className="text-[#1D2939]">Delta (Δ) Shift:</span>
+              <span className={`font-mono font-bold ${deltaShift > 0 ? 'text-[#12B76A]' : deltaShift < 0 ? 'text-[#F04438]' : 'text-[#667085]'}`}>
+                {deltaShift > 0 ? `+${deltaShift.toFixed(2)}` : deltaShift.toFixed(2)} Δ
+                {' '}(Sim: {scenarioResult.delta.toFixed(2)})
+              </span>
+            </div>
+            <input
+              type="range"
+              min="-0.35"
+              max="0.35"
+              step="0.01"
+              value={deltaShift}
+              onChange={(e) => setDeltaShift(parseFloat(e.target.value))}
+              className="w-full accent-[#00778A] h-2 bg-[#DCE9EE] rounded-lg cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-[#667085] mt-1 font-mono">
+              <span>-0.35 OTM</span>
+              <span>Target Δ</span>
+              <span>+0.35 ITM</span>
             </div>
           </div>
 
@@ -317,10 +348,10 @@ export const ResultCards: React.FC = () => {
               onChange={(e) => setIvOffsetPercent(parseFloat(e.target.value))}
               className="w-full accent-[#7A9266] h-2 bg-[#DCE9EE] rounded-lg cursor-pointer"
             />
-            <div className="flex justify-between text-[10px] text-[#667085] mt-1">
-              <span>-20% Vol Crush</span>
-              <span>Baseline IV</span>
-              <span>+20% Vol Spike</span>
+            <div className="flex justify-between text-[10px] text-[#667085] mt-1 font-mono">
+              <span>-20% Crush</span>
+              <span>Baseline</span>
+              <span>+20% Spike</span>
             </div>
           </div>
         </div>

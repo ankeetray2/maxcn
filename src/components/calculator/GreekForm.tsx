@@ -20,6 +20,9 @@ export const GreekForm: React.FC = () => {
   const {
     calculator,
     setCalculatorInput,
+    setSpotPrice,
+    spotPriceSource,
+    currentSpotPrice,
     setLotPreset,
     setSelectedCommodity,
     selectedCommodity,
@@ -35,11 +38,10 @@ export const GreekForm: React.FC = () => {
   const { currentPrice: liveGoldPrice, isLoading: isPriceLoading } = usePriceStore();
   const [savedToast, setSavedToast] = useState(false);
 
-  // Auto-populate Spot Price on mount or when live price loads
+  // Auto-populate Spot Price ONLY on initial empty state if no manual or uploaded spot exists
   useEffect(() => {
-    if (liveGoldPrice && (!calculator.spotPrice || calculator.spotPrice <= 0 || calculator.spotPrice === 153330 || calculator.spotPrice === 71500)) {
-      setCalculatorInput({ spotPrice: liveGoldPrice });
-      runScenarioSimulation();
+    if (liveGoldPrice && (!calculator.spotPrice || calculator.spotPrice <= 0) && spotPriceSource === 'Live Market Price') {
+      setSpotPrice(liveGoldPrice, 'Live Market Price');
     }
   }, [liveGoldPrice]);
 
@@ -277,33 +279,65 @@ export const GreekForm: React.FC = () => {
               <label className="text-xs font-bold text-[#1D2939]">
                 Spot Price ({settings.currency === 'INR' ? '₹' : '$'})
               </label>
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#ECFDF3] text-[#12B76A] border border-[#12B76A]/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#12B76A] animate-pulse" />
-                Live
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
+                spotPriceSource === 'Manual Input'
+                  ? 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]'
+                  : spotPriceSource === 'Uploaded Screenshot'
+                  ? 'bg-[#F9F5FF] text-[#6941C6] border-[#E9D7FE]'
+                  : 'bg-[#ECFDF3] text-[#027A48] border-[#A6F4C5]'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  spotPriceSource === 'Manual Input'
+                    ? 'bg-[#F79009]'
+                    : spotPriceSource === 'Uploaded Screenshot'
+                    ? 'bg-[#7F56D9]'
+                    : 'bg-[#12B76A] animate-pulse'
+                }`} />
+                {spotPriceSource}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setCalculatorInput({ spotPrice: liveGoldPrice || 153330 });
-                runScenarioSimulation();
-              }}
-              className="text-[10px] text-[#00778A] hover:underline font-semibold flex items-center gap-1"
-              title="Re-populate with latest live MCX spot price"
-            >
-              <RefreshCw className="w-2.5 h-2.5" />
-              <span>Live: ₹{(liveGoldPrice || 153330).toLocaleString('en-IN')}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {liveGoldPrice && (
+                <button
+                  type="button"
+                  onClick={() => setSpotPrice(liveGoldPrice, 'Live Market Price')}
+                  className="text-[10px] text-[#00778A] hover:underline font-semibold flex items-center gap-1"
+                  title="Switch Spot Price to live MCX feed"
+                >
+                  <RefreshCw className="w-2.5 h-2.5" />
+                  <span>Live: ₹{liveGoldPrice.toLocaleString('en-IN')}</span>
+                </button>
+              )}
+              {price?.spotPrice && price.spotPrice !== liveGoldPrice && (
+                <button
+                  type="button"
+                  onClick={() => setSpotPrice(price.spotPrice, 'Uploaded Screenshot')}
+                  className="text-[10px] text-[#6941C6] hover:underline font-semibold"
+                  title="Switch Spot Price to uploaded screenshot value"
+                >
+                  <span>Uploaded: ₹{price.spotPrice.toLocaleString('en-IN')}</span>
+                </button>
+              )}
+            </div>
           </div>
           <div className="relative">
             <input
               type="number"
               step="1"
-              value={calculator.spotPrice}
-              onChange={(e) => setCalculatorInput({ spotPrice: parseFloat(e.target.value) || 0 })}
+              value={calculator.spotPrice || ''}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value) || 0;
+                setSpotPrice(val, 'Manual Input');
+              }}
               className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
-              placeholder="153330"
+              placeholder="153669"
             />
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-[#667085] mt-1">
+            <span>Priority: 1. Manual Input &gt; 2. Uploaded Screenshot &gt; 3. Live Price</span>
+            {spotPriceSource === 'Manual Input' && (
+              <span className="text-[#B54708] font-medium">Manual input active</span>
+            )}
           </div>
         </div>
 

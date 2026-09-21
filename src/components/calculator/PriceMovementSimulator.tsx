@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useGreeksStore } from '../../store/useGreeksStore';
-import { calculateGreeks, formatCurrency, formatGreek } from '../../utils/greeks';
+import { calculateGreeks, formatCurrency, formatGreek, spotForTargetDelta } from '../../utils/greeks';
 import {
   TrendingUp,
   TrendingDown,
@@ -32,7 +32,9 @@ export const PriceMovementSimulator: React.FC<PriceMovementSimulatorProps> = ({
     isSavingDatabase,
     lastSaveStatus,
     saveScenarioAnalysisToMongoDB,
-    savedScenarios
+    savedScenarios,
+    currentSpotPrice,
+    spotPriceSource
   } = useGreeksStore();
 
   // Selected expected move in points (default: +1000 as per prompt benchmark)
@@ -40,16 +42,33 @@ export const PriceMovementSimulator: React.FC<PriceMovementSimulatorProps> = ({
   const [customPointsInput, setCustomPointsInput] = useState<string>('');
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
-  // Quick Move Preset Buttons as defined in user requirements
-  const positiveMoves = [100, 250, 500, 1000, 1500, 2000];
-  const negativeMoves = [-100, -250, -500, -1000, -1500, -2000];
-  const customExamples = [500, 1200, -800, 2500];
+  // Option direction and current delta magnitude
+  const isCall = calculator.optionType === 'CALL';
 
-  // Dynamic Spot Price Calculation
-  const currentPrice = calculator.spotPrice;
+  // Dynamic Spot Price Calculation: Manual input overrides all other sources
+  const currentPrice = currentSpotPrice || calculator.spotPrice;
+  // Future Spot Price Formula: Future Spot = Current Spot + Expected Move
   const newPrice = Math.max(0.01, currentPrice + selectedMove);
 
-  // Recalculate Greeks in real-time for the new price using Black-Scholes
+  // CURRENT PREMIUM: Fresh Black-Scholes calculation using Current Spot Price
+  // S = Current Spot, K = Strike, T = Time to Expiry, IV = Volatility, R = Risk Free Rate
+  const currentGreeks = useMemo(() => {
+    return calculateGreeks(
+      currentPrice,
+      calculator.strikePrice,
+      calculator.expiryDays,
+      calculator.volatility,
+      calculator.interestRate,
+      calculator.optionType,
+      settings.pricingModel,
+      calculator.contracts,
+      calculator.lotSize
+    );
+  }, [currentPrice, calculator.strikePrice, calculator.expiryDays, calculator.volatility, calculator.interestRate, calculator.optionType, settings.pricingModel, calculator.contracts, calculator.lotSize]);
+
+  // FUTURE PREMIUM: Fresh Black-Scholes calculation using Future Spot Price
+  // S = Future Spot, K = Strike, T = Time to Expiry, IV = Volatility, R = Risk Free Rate
+  // DO NOT USE: Current Premium value in Future Premium card. Always run a fresh calculation using Future Spot!
   const simulatedGreeks = useMemo(() => {
     return calculateGreeks(
       newPrice,
@@ -62,10 +81,57 @@ export const PriceMovementSimulator: React.FC<PriceMovementSimulatorProps> = ({
       calculator.contracts,
       calculator.lotSize
     );
-  }, [newPrice, calculator, settings.pricingModel]);
+  }, [newPrice, calculator.strikePrice, calculator.expiryDays, calculator.volatility, calculator.interestRate, calculator.optionType, settings.pricingModel, calculator.contracts, calculator.lotSize]);
+
+  // Current delta magnitude (strictly between 0.01 and 0.99 for slider calibration)
+  const currentDeltaMagnitude = Math.min(0.99, Math.max(0.01, Math.abs(simulatedGreeks.delta)));
+
+  // Adaptive Spot Move range based on underlying price and selected move
+  const spotMoveRange = useMemo(() => {
+    let baseline = Math.round(currentPrice * 0.08);
+    if (baseline < 25) baseline = 25;
+    else if (baseline < 100) baseline = Math.ceil(baseline / 10) * 10;
+    else if (baseline < 1000) baseline = Math.ceil(baseline / 50) * 50;
+    else baseline = Math.ceil(baseline / 500) * 500;
+
+    const maxAbs = Math.max(baseline, Math.ceil(Math.abs(selectedMove) / 100) * 100 || baseline);
+    const step = currentPrice < 500 ? 0.5 : maxAbs >= 2000 ? 50 : maxAbs >= 500 ? 10 : maxAbs >= 100 ? 5 : 1;
+    return { maxMove: maxAbs, step };
+  }, [currentPrice, selectedMove]);
+
+  // Quick Move Preset Buttons adapted to commodity price scale (including -2800 benchmark)
+  const { positiveMoves, negativeMoves } = useMemo(() => {
+    if (currentPrice < 500) {
+      return {
+        positiveMoves: [2, 5, 10, 15, 25, 40],
+        negativeMoves: [-2, -5, -10, -15, -25, -40]
+      };
+    } else if (currentPrice < 2000) {
+      return {
+        positiveMoves: [10, 25, 50, 100, 150, 200],
+        negativeMoves: [-10, -25, -50, -100, -150, -200]
+      };
+    } else if (currentPrice < 15000) {
+      return {
+        positiveMoves: [50, 100, 200, 400, 600, 800],
+        negativeMoves: [-50, -100, -200, -400, -600, -800]
+      };
+    } else {
+      return {
+        positiveMoves: [100, 250, 500, 1000, 1500, 2000],
+        negativeMoves: [-100, -250, -500, -1000, -1500, -2000, -2800]
+      };
+    }
+  }, [currentPrice]);
+
+  const customExamples = useMemo(() => {
+    if (currentPrice < 500) return [5, 12, -8, 25];
+    if (currentPrice < 2000) return [50, 120, -80, 250];
+    return [-2800, -1000, 500, 1000, 2500];
+  }, [currentPrice]);
 
   // P&L Analysis
-  const currentPremium = calculatedResult.price;
+  const currentPremium = currentGreeks.price;
   const futurePremium = simulatedGreeks.price;
   const premiumChange = futurePremium - currentPremium;
   const pnlPerLot = premiumChange * calculator.lotSize;
@@ -80,6 +146,22 @@ export const PriceMovementSimulator: React.FC<PriceMovementSimulatorProps> = ({
     if (onSelectMove) {
       onSelectMove(points, simSpot);
     }
+  };
+
+  // Precise Target Delta inverted Black-Scholes solver
+  const handleTargetDeltaChange = (targetMag: number) => {
+    const targetDelta = isCall ? targetMag : -targetMag;
+    const targetSpot = spotForTargetDelta(
+      targetDelta,
+      calculator.strikePrice,
+      calculator.expiryDays,
+      calculator.volatility,
+      calculator.interestRate,
+      calculator.optionType
+    );
+    const rawDiff = targetSpot - currentPrice;
+    const movePts = currentPrice >= 500 ? Math.round(rawDiff) : Math.round(rawDiff * 10) / 10;
+    handleSelectMove(movePts);
   };
 
   const handleCustomInputSubmit = (e: React.FormEvent) => {
@@ -124,6 +206,7 @@ export const PriceMovementSimulator: React.FC<PriceMovementSimulatorProps> = ({
         theta: res.theta,
         vega: res.vega,
         rho: res.rho,
+        pop: res.pop,
         premium: res.price,
         pnlPerLot: lotPnl,
         pnlTotal: totPnl,
@@ -275,6 +358,134 @@ Total P&L (${calculator.contracts} Lots x ${calculator.lotSize}): ₹${pnlTotal.
           </div>
         </div>
 
+        {/* Interactive Delta (Δ) & Spot Shift Slider Controls */}
+        <div className="mb-6 p-4 rounded-2xl bg-white dark:bg-[#101828] border border-[#00778A]/25 dark:border-[#00778A]/40 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-[#00778A] dark:text-[#38BDF8]" />
+              <span className="text-xs font-bold text-[#1D2939] dark:text-white">
+                Interactive Delta (Δ) & Spot Shift Dual Sliders
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-[#00778A] dark:text-[#38BDF8] font-bold bg-[#00778A]/10 dark:bg-[#00778A]/20 px-2.5 py-0.5 rounded-full">
+                Simulated Delta: {formatGreek(simulatedGreeks.delta, 3)}
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                isCall
+                  ? 'bg-[#10B981]/15 text-[#10B981]'
+                  : 'bg-[#F04438]/15 text-[#F04438]'
+              }`}>
+                {isCall ? 'CALL (CE)' : 'PUT (PE)'}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Slider 1: Direct Spot Move Points Slider */}
+            <div className="flex flex-col justify-between bg-slate-50/70 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
+              <div>
+                <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                  <span className="text-[#667085] dark:text-slate-400">Spot Shift Slider (Points):</span>
+                  <span className={`font-mono font-bold ${selectedMove > 0 ? 'text-[#12B76A]' : selectedMove < 0 ? 'text-[#F04438]' : 'text-[#667085]'}`}>
+                    {selectedMove >= 0 ? `+${selectedMove}` : selectedMove} pts
+                    {' '}(₹{Math.round(newPrice).toLocaleString('en-IN')})
+                  </span>
+                </div>
+                <input
+                  id="spot-shift-slider"
+                  type="range"
+                  min={-spotMoveRange.maxMove}
+                  max={spotMoveRange.maxMove}
+                  step={spotMoveRange.step}
+                  value={selectedMove}
+                  onChange={(e) => handleSelectMove(parseFloat(e.target.value))}
+                  className="w-full accent-[#00778A] h-2 bg-[#DCE9EE] dark:bg-slate-700 rounded-lg cursor-pointer"
+                  aria-label="Underlying Spot Shift Slider"
+                />
+                <div className="flex justify-between text-[10px] text-[#667085] dark:text-slate-400 mt-1.5 font-mono">
+                  <span>-{spotMoveRange.maxMove.toLocaleString('en-IN')} pts</span>
+                  <span>0 (ATM Base)</span>
+                  <span>+{spotMoveRange.maxMove.toLocaleString('en-IN')} pts</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Slider 2: Target Delta (Δ) Sensitivity Slider */}
+            <div className="flex flex-col justify-between bg-slate-50/70 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
+              <div>
+                <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[#1D2939] dark:text-white font-bold">Target Delta (Δ) Slider:</span>
+                    <span className="text-[10px] text-[#667085] dark:text-slate-400 font-normal">
+                      (Inverts Black-Scholes)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono">
+                    <span className="font-bold text-[#00778A] dark:text-[#38BDF8]">
+                      Δ {formatGreek(simulatedGreeks.delta, 2)}
+                    </span>
+                    <span className="text-[10px] text-[#667085] dark:text-slate-400">
+                      (|Δ| {currentDeltaMagnitude.toFixed(2)})
+                    </span>
+                  </div>
+                </div>
+
+                <input
+                  id="target-delta-slider"
+                  type="range"
+                  min="0.05"
+                  max="0.95"
+                  step="0.01"
+                  value={Number(currentDeltaMagnitude.toFixed(2))}
+                  onChange={(e) => handleTargetDeltaChange(parseFloat(e.target.value))}
+                  className="w-full accent-[#10B981] h-2 bg-[#DCE9EE] dark:bg-slate-700 rounded-lg cursor-pointer"
+                  aria-label="Target Delta Sensitivity Slider"
+                />
+
+                <div className="flex justify-between text-[10px] text-[#667085] dark:text-slate-400 mt-1.5 font-mono">
+                  <span>0.05 Deep OTM</span>
+                  <span className="text-[#00778A] dark:text-[#38BDF8] font-bold">0.50 ATM</span>
+                  <span>0.95 Deep ITM</span>
+                </div>
+              </div>
+
+              {/* Quick Target Delta Presets */}
+              <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-1 overflow-x-auto scrollbar-none">
+                <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider shrink-0 mr-1">
+                  Preset Δ:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { label: '0.15 OTM', val: 0.15 },
+                    { label: '0.30 Wing', val: 0.30 },
+                    { label: '0.50 ATM', val: 0.50 },
+                    { label: '0.70 ITM', val: 0.70 },
+                    { label: '0.85 Deep', val: 0.85 }
+                  ].map((preset) => {
+                    const isClose = Math.abs(currentDeltaMagnitude - preset.val) < 0.03;
+                    return (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => handleTargetDeltaChange(preset.val)}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold transition-all border cursor-pointer shrink-0 ${
+                          isClose
+                            ? 'bg-[#10B981] text-white border-[#10B981] shadow-2xs'
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-[#10B981]'
+                        }`}
+                        title={`Simulate underlying price move to reach Target Delta ${isCall ? '+' : '-'}${preset.val.toFixed(2)}`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Buttons Section: Positive Shocks & Negative Shocks */}
         <div className="space-y-4 mb-6">
           {/* Positive Moves */}
@@ -328,20 +539,28 @@ Total P&L (${calculator.contracts} Lots x ${calculator.lotSize}): ₹${pnlTotal.
         <div className="p-4 rounded-2xl bg-[#F7FAFB] border border-[#DCE9EE]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <label className="block text-xs font-bold text-[#1D2939] mb-1.5">
-                Enter Custom Points:
+              <label className="block text-xs font-bold text-[#1D2939] mb-1.5 flex items-center justify-between">
+                <span>Enter Expected Move (Points):</span>
+                <span className="text-[10px] text-[#00778A] font-semibold">Real-time recalculation (no button required)</span>
               </label>
               <form onSubmit={handleCustomInputSubmit} className="flex items-center gap-2 max-w-md">
                 <input
                   type="number"
                   value={customPointsInput}
-                  onChange={(e) => setCustomPointsInput(e.target.value)}
-                  placeholder="e.g. 500, 1200, -800, 2500"
+                  onChange={(e) => {
+                    const text = e.target.value;
+                    setCustomPointsInput(text);
+                    const val = parseFloat(text);
+                    if (!isNaN(val)) {
+                      handleSelectMove(val);
+                    }
+                  }}
+                  placeholder="e.g. -2800, 1000, 500"
                   className="flex-1 px-3.5 py-2 text-xs font-mono rounded-xl bg-white border border-[#DCE9EE] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A]"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 text-xs font-bold bg-[#00778A] text-white rounded-xl hover:bg-[#00778A]/90 transition-all"
+                  className="px-4 py-2 text-xs font-bold bg-[#00778A] text-white rounded-xl hover:bg-[#00778A]/90 transition-all shadow-xs"
                 >
                   Apply Move
                 </button>
@@ -350,12 +569,13 @@ Total P&L (${calculator.contracts} Lots x ${calculator.lotSize}): ₹${pnlTotal.
 
             <div>
               <span className="text-[11px] font-semibold text-[#667085] block mb-1">
-                Examples:
+                Quick Benchmarks:
               </span>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {customExamples.map((ex) => (
                   <button
                     key={ex}
+                    type="button"
                     onClick={() => {
                       setCustomPointsInput(String(ex));
                       handleSelectMove(ex);
@@ -375,79 +595,180 @@ Total P&L (${calculator.contracts} Lots x ${calculator.lotSize}): ₹${pnlTotal.
         </div>
       </div>
 
-      {/* 2. REAL-TIME RECALCULATION & P&L ANALYSIS HIGHLIGHT CARDS */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* P&L Analysis Highlights (5 cols) */}
-        <div className="lg:col-span-5 bg-white/90 backdrop-blur-md rounded-[24px] border border-[#DCE9EE] p-6 shadow-sm flex flex-col justify-between">
+      {/* 2. THREE-CARD DISPLAY: CURRENT PREMIUM CARD | FUTURE PREMIUM CARD | P&L POSITION ANALYSIS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Card 1: Current Premium Card */}
+        <div className="bg-white/90 backdrop-blur-md rounded-[24px] border border-[#DCE9EE] p-5 shadow-sm flex flex-col justify-between relative overflow-hidden">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-[#DCE9EE]/60 mb-4">
-              <div className="flex items-center gap-2">
-                <h4 className="text-base font-bold text-[#1D2939]">P&L Analysis</h4>
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                  pnlTotal >= 0 ? 'bg-[#12B76A]/10 text-[#12B76A]' : 'bg-[#F04438]/10 text-[#F04438]'
-                }`}>
-                  {pnlTotal >= 0 ? 'Profit' : 'Loss'}
+            <div className="flex items-center justify-between pb-3 border-b border-[#DCE9EE]/60 mb-3">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#667085] block">
+                  Current Premium Card
+                </span>
+                <span className="text-[10px] text-[#00778A] font-semibold">
+                  Source: {spotPriceSource}
                 </span>
               </div>
-              <span className="text-xs text-[#667085]">
-                {calculator.contracts} Lots × {calculator.lotSize} Size = {totalQuantity.toLocaleString()} Units
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700">
+                Base Price
               </span>
             </div>
 
-            {/* Premium Comparison */}
-            <div className="space-y-3 font-mono text-xs mb-5">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F7FAFB] border border-[#DCE9EE]/70">
-                <span className="text-[#667085] font-sans">Current Premium:</span>
-                <span className="font-bold text-[#1D2939]">
-                  {formatCurrency(currentPremium, settings.currency, 2)}
-                </span>
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs text-[#667085] font-medium">Current Spot:</div>
+                <div className="text-xl font-bold font-mono text-[#1D2939]">
+                  ₹{Math.round(currentPrice).toLocaleString('en-IN')}
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F7FAFB] border border-[#DCE9EE]/70">
-                <span className="text-[#667085] font-sans">Future Premium:</span>
-                <span className="font-bold text-[#00778A]">
-                  {formatCurrency(futurePremium, settings.currency, 2)}
-                </span>
+              <div className="p-3 rounded-xl bg-[#F7FAFB] border border-[#DCE9EE]">
+                <div className="text-xs text-[#667085] font-medium">Current Premium:</div>
+                <div className="text-2xl font-bold font-mono text-[#1D2939] tracking-tight">
+                  ₹{currentPremium.toFixed(2)}
+                </div>
+                <div className="text-[10px] text-[#667085] mt-0.5">
+                  Calculated using Current Spot (S = {Math.round(currentPrice).toLocaleString('en-IN')})
+                </div>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-[#DCE9EE]">
-                <span className="text-[#667085] font-sans font-semibold">Premium Change:</span>
-                <span className={`font-bold ${premiumChange >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
-                  {premiumChange >= 0 ? '+' : ''}{formatCurrency(premiumChange, settings.currency, 2)} ({returnPercentage.toFixed(2)}%)
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-[#DCE9EE]">
-                <span className="text-[#667085] font-sans font-semibold">Profit/Loss per Lot:</span>
-                <span className={`font-bold ${pnlPerLot >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
-                  {pnlPerLot >= 0 ? '+' : ''}{formatCurrency(pnlPerLot, settings.currency, 2)}
-                </span>
+              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/70">
+                  <span className="text-[#667085] font-sans block text-[10px]">Delta (Δ):</span>
+                  <span className="font-bold text-[#1D2939]">{formatGreek(currentGreeks.delta, 4)}</span>
+                </div>
+                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200/70">
+                  <span className="text-[#667085] font-sans block text-[10px]">POP:</span>
+                  <span className="font-bold text-[#12B76A]">{currentGreeks.pop.toFixed(1)}%</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Big Total Profit/Loss Card */}
-          <div className={`p-4 rounded-2xl border ${
-            pnlTotal >= 0
-              ? 'bg-[#12B76A]/10 border-[#12B76A]/30 text-[#12B76A]'
-              : 'bg-[#F04438]/10 border-[#F04438]/30 text-[#F04438]'
-          }`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold uppercase tracking-wider">
-                Total Profit / Loss ({calculator.contracts} Lots)
-              </span>
-              <span className="text-xs font-bold font-mono">
-                {returnPercentage >= 0 ? '+' : ''}{returnPercentage.toFixed(2)}%
-              </span>
-            </div>
-            <div className="text-2xl sm:text-3xl font-mono font-bold">
-              {pnlTotal >= 0 ? '+' : ''}{formatCurrency(pnlTotal, settings.currency, 2)}
-            </div>
-            <div className="text-[11px] text-[#667085] mt-1 font-sans">
-              Based on {selectedMove >= 0 ? `+${selectedMove}` : selectedMove} pts move from ₹{currentPrice.toLocaleString('en-IN')} to ₹{Math.round(newPrice).toLocaleString('en-IN')}
-            </div>
+          <div className="text-[10px] text-[#667085] mt-4 pt-2 border-t border-[#DCE9EE]/60 flex items-center justify-between">
+            <span>K = ₹{calculator.strikePrice}</span>
+            <span>IV = {calculator.volatility}%</span>
           </div>
         </div>
+
+        {/* Card 2: Future Premium Card */}
+        <div className="bg-white/90 backdrop-blur-md rounded-[24px] border border-[#00778A]/40 p-5 shadow-sm flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-[#00778A]/5 to-transparent">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#00778A]/20 mb-3">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#00778A] block">
+                  Future Premium Card
+                </span>
+                <span className="text-[10px] text-[#667085]">
+                  Shifted Spot Simulation
+                </span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                selectedMove >= 0 ? 'bg-[#12B76A]/15 text-[#12B76A]' : 'bg-[#F04438]/15 text-[#F04438]'
+              }`}>
+                {selectedMove >= 0 ? `+${selectedMove}` : selectedMove} pts
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs text-[#667085] font-medium">Future Spot:</div>
+                <div className="text-xl font-bold font-mono text-[#00778A]">
+                  ₹{Math.round(newPrice).toLocaleString('en-IN')}
+                </div>
+                <div className="text-[10px] text-[#667085] font-mono">
+                  ₹{Math.round(currentPrice).toLocaleString('en-IN')} {selectedMove >= 0 ? `+ ${selectedMove}` : `- ${Math.abs(selectedMove)}`}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#00778A]/10 border border-[#00778A]/30">
+                <div className="text-xs text-[#00778A] font-bold">Future Premium:</div>
+                <div className="text-2xl font-bold font-mono text-[#00778A] tracking-tight">
+                  ₹{futurePremium.toFixed(2)}
+                </div>
+                <div className="text-[10px] text-[#667085] mt-0.5">
+                  Fresh Black-Scholes using Future Spot (S = {Math.round(newPrice).toLocaleString('en-IN')})
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                <div className="bg-white p-2 rounded-lg border border-[#00778A]/20">
+                  <span className="text-[#667085] font-sans block text-[10px]">Future Delta:</span>
+                  <span className="font-bold text-[#00778A]">{formatGreek(simulatedGreeks.delta, 4)}</span>
+                </div>
+                <div className="bg-white p-2 rounded-lg border border-[#00778A]/20">
+                  <span className="text-[#667085] font-sans block text-[10px]">Future POP:</span>
+                  <span className="font-bold text-[#12B76A]">{simulatedGreeks.pop.toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-[#00778A] font-semibold mt-4 pt-2 border-t border-[#00778A]/20 flex items-center justify-between">
+            <span>Fresh B&S Calculated</span>
+            <span>Real-time Active</span>
+          </div>
+        </div>
+
+        {/* Card 3: P&L Position Analysis */}
+        <div className={`backdrop-blur-md rounded-[24px] border p-5 shadow-sm flex flex-col justify-between relative overflow-hidden ${
+          pnlTotal >= 0
+            ? 'bg-[#12B76A]/5 border-[#12B76A]/30'
+            : 'bg-[#F04438]/5 border-[#F04438]/30'
+        }`}>
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-black/10 mb-3">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#1D2939] block">
+                  P&L Difference
+                </span>
+                <span className="text-[10px] text-[#667085]">
+                  Difference = Future Premium - Current Premium
+                </span>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                pnlTotal >= 0 ? 'bg-[#12B76A] text-white' : 'bg-[#F04438] text-white'
+              }`}>
+                {pnlTotal >= 0 ? 'PROFIT' : 'LOSS'}
+              </span>
+            </div>
+
+            <div className="space-y-3 font-mono text-xs">
+              <div className="p-3 rounded-xl bg-white border border-black/10">
+                <div className="text-xs text-[#667085] font-sans font-medium">Premium Change:</div>
+                <div className={`text-2xl font-bold tracking-tight ${premiumChange >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
+                  {premiumChange >= 0 ? '+' : ''}₹{premiumChange.toFixed(2)}{' '}
+                  <span className="text-sm font-semibold">({returnPercentage >= 0 ? '+' : ''}{returnPercentage.toFixed(2)}%)</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white/80 border border-black/5">
+                  <span className="text-[#667085] font-sans">P&L per Lot (Size {calculator.lotSize}):</span>
+                  <span className={`font-bold ${pnlPerLot >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
+                    {pnlPerLot >= 0 ? '+' : ''}₹{Math.round(pnlPerLot).toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between p-2 rounded-lg bg-white/80 border border-black/5">
+                  <span className="text-[#667085] font-sans">Total Position ({calculator.contracts} Lots):</span>
+                  <span className={`text-sm font-bold ${pnlTotal >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
+                    {pnlTotal >= 0 ? '+' : ''}₹{Math.round(pnlTotal).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-[#667085] mt-4 pt-2 border-t border-black/10 flex items-center justify-between">
+            <span>Total Qty: {totalQuantity.toLocaleString()} Units</span>
+            <span>Commodity: {calculator.commodity}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2b. RECALCULATED BLACK-SCHOLES GREEKS SUITE */}
+      <div className="grid grid-cols-1 gap-6">
 
         {/* Recalculated Greeks Card (7 cols) */}
         <div className="lg:col-span-7 bg-white/90 backdrop-blur-md rounded-[24px] border border-[#DCE9EE] p-6 shadow-sm">
@@ -524,6 +845,17 @@ Total P&L (${calculator.contracts} Lots x ${calculator.lotSize}): ₹${pnlTotal.
               </div>
             </div>
 
+            {/* Probability of Profit (POP) */}
+            <div className="p-3.5 rounded-2xl bg-[#F7FAFB] border border-[#DCE9EE]">
+              <div className="text-[11px] font-semibold text-[#667085]">Probability of Profit (POP)</div>
+              <div className="text-lg font-mono font-bold text-[#12B76A] mt-0.5">
+                {simulatedGreeks.pop.toFixed(1)}%
+              </div>
+              <div className="text-[10px] text-[#667085] mt-0.5">
+                Base: {calculatedResult.pop.toFixed(1)}%
+              </div>
+            </div>
+
             {/* Premium */}
             <div className="p-3.5 rounded-2xl bg-[#F7FAFB] border border-[#DCE9EE]">
               <div className="text-[11px] font-semibold text-[#667085]">Recalculated Premium</div>
@@ -590,6 +922,8 @@ Total P&L (${calculator.contracts} Lots x ${calculator.lotSize}): ₹${pnlTotal.
                 <th className="py-3 px-3">Gamma (Γ)</th>
                 <th className="py-3 px-3">Theta (θ)</th>
                 <th className="py-3 px-3">Vega (ν)</th>
+                <th className="py-3 px-3">Rho (ρ)</th>
+                <th className="py-3 px-3">POP (%)</th>
                 <th className="py-3 px-3">Premium</th>
                 <th className="py-3 px-3 text-right">P&L per Lot</th>
                 <th className="py-3 px-3 text-right font-bold">Total P&L</th>
@@ -626,6 +960,8 @@ Total P&L (${calculator.contracts} Lots x ${calculator.lotSize}): ₹${pnlTotal.
                     <td className="py-3 px-3 text-[#7A9266]">{row.gamma.toFixed(6)}</td>
                     <td className="py-3 px-3 text-[#F04438]">{row.theta.toFixed(2)}</td>
                     <td className="py-3 px-3 text-[#12B76A]">{row.vega.toFixed(2)}</td>
+                    <td className="py-3 px-3 text-[#1D2939]">{row.rho.toFixed(2)}</td>
+                    <td className="py-3 px-3 text-[#12B76A] font-semibold">{row.pop.toFixed(1)}%</td>
                     <td className="py-3 px-3 font-semibold">₹{row.premium.toFixed(2)}</td>
                     <td className={`py-3 px-3 text-right ${row.pnlPerLot >= 0 ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
                       {row.pnlPerLot >= 0 ? '+' : ''}₹{Math.round(row.pnlPerLot).toLocaleString('en-IN')}

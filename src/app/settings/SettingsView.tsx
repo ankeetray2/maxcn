@@ -460,6 +460,168 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
+      {/* Default Commodity Selection */}
+      <div className="bg-white/90 dark:bg-[#121E2A] backdrop-blur-md p-6 rounded-[24px] border border-[#DCE9EE] dark:border-[#223344] shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Sliders className="w-5 h-5 text-[#00778A]" />
+          <div>
+            <h3 className="text-base font-bold text-[#1D2939] dark:text-white">
+              Default Commodity
+            </h3>
+            <p className="text-xs text-[#667085] dark:text-[#94A3B8]">
+              Select the initial commodity loaded when opening the application
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { id: 'GOLD', label: 'Gold', desc: 'MCX Gold Mini / 100g' },
+            { id: 'SILVER', label: 'Silver', desc: 'MCX Silver Mini / 5kg' },
+            { id: 'CRUDEOIL', label: 'Crude Oil', desc: 'MCX Crude / 100 bbl' },
+            { id: 'NATURALGAS', label: 'Natural Gas', desc: 'MCX NG / 1250 mmBtu' },
+            { id: 'COPPER', label: 'Copper', desc: 'MCX Copper / 2500 kg' },
+            { id: 'ZINC', label: 'Zinc', desc: 'MCX Zinc / 5000 kg' },
+          ].map((comm) => {
+            const isSelected = (settings.defaultCommodity || 'GOLD') === comm.id;
+            return (
+              <button
+                key={comm.id}
+                onClick={() => {
+                  handleUpdate({ defaultCommodity: comm.id as any });
+                  useGreeksStore.getState().setSelectedCommodity(comm.id as any);
+                }}
+                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#00778A]/10 border-[#00778A] dark:border-[#38BDF8] shadow-xs'
+                    : 'bg-[#F7FAFB] dark:bg-[#1A2936] border-[#DCE9EE] dark:border-[#2E4052] hover:bg-white dark:hover:bg-[#223344]'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`text-xs font-bold ${isSelected ? 'text-[#00778A] dark:text-[#38BDF8]' : 'text-[#1D2939] dark:text-white'}`}>
+                    {comm.label}
+                  </span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-[#00778A] dark:text-[#38BDF8]" />}
+                </div>
+                <span className="text-[10px] text-[#667085] dark:text-[#94A3B8] block truncate">
+                  {comm.desc}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Chart Preferences */}
+      <div className="bg-white/90 dark:bg-[#121E2A] backdrop-blur-md p-6 rounded-[24px] border border-[#DCE9EE] dark:border-[#223344] shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Activity className="w-5 h-5 text-[#12B76A]" />
+          <div>
+            <h3 className="text-base font-bold text-[#1D2939] dark:text-white">
+              Chart Preferences
+            </h3>
+            <p className="text-xs text-[#667085] dark:text-[#94A3B8]">
+              Configure which analytics curves and visual indicators are rendered in the Analytics charts
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Show IV Smile */}
+          <div
+            onClick={() => {
+              const current = settings.chartPreferences?.showIvSmile ?? true;
+              handleUpdate({
+                chartPreferences: {
+                  showIvSmile: !current,
+                  showGreeks: settings.chartPreferences?.showGreeks ?? true,
+                  showVolume: settings.chartPreferences?.showVolume ?? true
+                }
+              });
+            }}
+            className={`p-4 rounded-2xl cursor-pointer border transition-all flex items-center justify-between ${
+              (settings.chartPreferences?.showIvSmile ?? true)
+                ? 'bg-white dark:bg-[#1A2936] border-[#00778A] shadow-xs ring-2 ring-[#00778A]/20'
+                : 'bg-white/50 dark:bg-[#162330] border-[#DCE9EE] dark:border-[#2E4052] hover:bg-white'
+            }`}
+          >
+            <div>
+              <span className="text-xs font-bold text-[#1D2939] dark:text-white block">Show IV Smile</span>
+              <span className="text-[11px] text-[#667085] dark:text-[#94A3B8]">Implied Volatility Smile curve across strikes</span>
+            </div>
+            <div className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-colors ${
+              (settings.chartPreferences?.showIvSmile ?? true)
+                ? 'bg-[#00778A] border-[#00778A] text-white'
+                : 'border-[#DCE9EE] dark:border-slate-600'
+            }`}>
+              {(settings.chartPreferences?.showIvSmile ?? true) && <Check className="w-3.5 h-3.5" />}
+            </div>
+          </div>
+
+          {/* Show Greeks */}
+          <div
+            onClick={() => {
+              const current = settings.chartPreferences?.showGreeks ?? true;
+              handleUpdate({
+                chartPreferences: {
+                  showIvSmile: settings.chartPreferences?.showIvSmile ?? true,
+                  showGreeks: !current,
+                  showVolume: settings.chartPreferences?.showVolume ?? true
+                }
+              });
+            }}
+            className={`p-4 rounded-2xl cursor-pointer border transition-all flex items-center justify-between ${
+              (settings.chartPreferences?.showGreeks ?? true)
+                ? 'bg-white dark:bg-[#1A2936] border-[#00778A] shadow-xs ring-2 ring-[#00778A]/20'
+                : 'bg-white/50 dark:bg-[#162330] border-[#DCE9EE] dark:border-[#2E4052] hover:bg-white'
+            }`}
+          >
+            <div>
+              <span className="text-xs font-bold text-[#1D2939] dark:text-white block">Show Greeks</span>
+              <span className="text-[11px] text-[#667085] dark:text-[#94A3B8]">Delta, Gamma, Theta, and Vega curves</span>
+            </div>
+            <div className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-colors ${
+              (settings.chartPreferences?.showGreeks ?? true)
+                ? 'bg-[#00778A] border-[#00778A] text-white'
+                : 'border-[#DCE9EE] dark:border-slate-600'
+            }`}>
+              {(settings.chartPreferences?.showGreeks ?? true) && <Check className="w-3.5 h-3.5" />}
+            </div>
+          </div>
+
+          {/* Show Volume */}
+          <div
+            onClick={() => {
+              const current = settings.chartPreferences?.showVolume ?? true;
+              handleUpdate({
+                chartPreferences: {
+                  showIvSmile: settings.chartPreferences?.showIvSmile ?? true,
+                  showGreeks: settings.chartPreferences?.showGreeks ?? true,
+                  showVolume: !current
+                }
+              });
+            }}
+            className={`p-4 rounded-2xl cursor-pointer border transition-all flex items-center justify-between ${
+              (settings.chartPreferences?.showVolume ?? true)
+                ? 'bg-white dark:bg-[#1A2936] border-[#00778A] shadow-xs ring-2 ring-[#00778A]/20'
+                : 'bg-white/50 dark:bg-[#162330] border-[#DCE9EE] dark:border-[#2E4052] hover:bg-white'
+            }`}
+          >
+            <div>
+              <span className="text-xs font-bold text-[#1D2939] dark:text-white block">Show Volume</span>
+              <span className="text-[11px] text-[#667085] dark:text-[#94A3B8]">Trading volume & Open Interest distribution</span>
+            </div>
+            <div className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-colors ${
+              (settings.chartPreferences?.showVolume ?? true)
+                ? 'bg-[#00778A] border-[#00778A] text-white'
+                : 'border-[#DCE9EE] dark:border-slate-600'
+            }`}>
+              {(settings.chartPreferences?.showVolume ?? true) && <Check className="w-3.5 h-3.5" />}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 4. Live Gold Price Feed & Refresh Configuration */}
       <PriceRefreshSettingsCard />
     </div>
@@ -578,52 +740,52 @@ const PriceRefreshSettingsCard: React.FC = () => {
       </div>
 
       {/* Auto Refresh Configuration */}
-      <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <label className="text-xs font-bold text-[#1D2939] block">
-              Automatic Background Price Refresh
-            </label>
-            <span className="text-[11px] text-[#667085]">
-              Continuously queries GET /api/price/latest and updates all application views silently
-            </span>
-          </div>
-          <button
-            onClick={() => toggleAutoRefresh()}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
-              isAutoRefreshEnabled ? 'bg-[#00778A]' : 'bg-gray-300'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                isAutoRefreshEnabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
+      <div className="space-y-4 pt-2">
+        <div>
+          <label className="text-xs font-bold text-[#1D2939] dark:text-white block mb-1">
+            Live Price Refresh
+          </label>
+          <span className="text-[11px] text-[#667085] dark:text-[#94A3B8] block mb-3">
+            Choose automatic background Gold price refresh interval or turn it Off
+          </span>
 
-        {isAutoRefreshEnabled && (
-          <div className="pt-2">
-            <label className="text-xs font-semibold text-[#1D2939] block mb-2">
-              Refresh Frequency Interval
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              {intervalOptions.map((opt) => (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Off', isOff: true, value: 0, desc: 'Manual refresh only' },
+              { label: '10s', isOff: false, value: 10, desc: 'Every 10 seconds' },
+              { label: '30s', isOff: false, value: 30, desc: 'Every 30 seconds' },
+              { label: '1m', isOff: false, value: 60, desc: 'Every 60 seconds' },
+            ].map((option) => {
+              const isSelected = option.isOff
+                ? !isAutoRefreshEnabled
+                : isAutoRefreshEnabled && autoRefreshInterval === option.value;
+
+              return (
                 <button
-                  key={opt.value}
-                  onClick={() => setAutoRefreshInterval(opt.value)}
-                  className={`p-2.5 rounded-xl text-xs font-semibold border transition-all text-center cursor-pointer ${
-                    autoRefreshInterval === opt.value
+                  key={option.label}
+                  onClick={() => {
+                    if (option.isOff) {
+                      if (isAutoRefreshEnabled) toggleAutoRefresh();
+                    } else {
+                      if (!isAutoRefreshEnabled) toggleAutoRefresh();
+                      setAutoRefreshInterval(option.value);
+                    }
+                  }}
+                  className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
+                    isSelected
                       ? 'bg-[#00778A] text-white border-[#00778A] shadow-xs'
-                      : 'bg-[#F7FAFB] text-[#1D2939] border-[#DCE9EE] hover:bg-white'
+                      : 'bg-[#F7FAFB] dark:bg-[#1A2936] text-[#1D2939] dark:text-white border-[#DCE9EE] dark:border-[#2E4052] hover:bg-white dark:hover:bg-[#223344]'
                   }`}
                 >
-                  {opt.label}
+                  <span className="text-sm font-bold block">{option.label}</span>
+                  <span className={`text-[10px] mt-0.5 block ${isSelected ? 'text-white/80' : 'text-[#667085] dark:text-[#94A3B8]'}`}>
+                    {option.desc}
+                  </span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

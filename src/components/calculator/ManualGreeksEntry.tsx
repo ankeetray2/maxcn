@@ -3,7 +3,7 @@ import { useGreeksStore } from '../../store/useGreeksStore';
 import { Edit3, RotateCcw, Sparkles, Check } from 'lucide-react';
 
 export const ManualGreeksEntry: React.FC = () => {
-  const { manualGreeks, setManualGreeks, calculatedResult } = useGreeksStore();
+  const { manualGreeks, setManualGreeks, calculatedResult, calculator } = useGreeksStore();
 
   const handleSetExample = () => {
     setManualGreeks({
@@ -57,11 +57,32 @@ export const ManualGreeksEntry: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            onClick={() => {
+              const state = useGreeksStore.getState();
+              setManualGreeks({
+                delta: state.greeks.delta,
+                gamma: state.greeks.gamma,
+                theta: state.greeks.theta,
+                vega: state.greeks.vega,
+                rho: state.greeks.rho,
+                pop: 50,
+                premium: state.greeks.premium
+              });
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#12B76A] hover:bg-[#0E9355] transition-all shadow-xs cursor-pointer"
+            title="Load the extracted ATM Greeks from the uploaded screenshot"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Load Ingested ATM Greeks</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleSetExample}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#00778A] hover:bg-[#005B6A] transition-all shadow-xs cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Load Prompt Benchmark Example</span>
+            <span>Load Benchmark</span>
           </button>
 
           <button
@@ -80,9 +101,14 @@ export const ManualGreeksEntry: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3.5">
         {/* Delta */}
         <div className="bg-[#F8FAFC] dark:bg-[#0F172A] p-3 rounded-xl border border-[#E2E8F0] dark:border-[#1E293B]">
-          <label className="block text-xs font-bold text-[#1D2939] dark:text-[#E2E8F0] mb-1">
-            Delta (Δ)
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-bold text-[#1D2939] dark:text-[#E2E8F0]">
+              Delta (Δ)
+            </label>
+            <span className="text-[10px] font-mono text-[#00778A] dark:text-[#2DD4BF] font-bold">
+              {manualGreeks.delta.toFixed(2)}
+            </span>
+          </div>
           <input
             type="number"
             step="0.01"
@@ -91,7 +117,25 @@ export const ManualGreeksEntry: React.FC = () => {
             className="w-full px-2.5 py-1.5 bg-white dark:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] rounded-lg text-xs font-mono font-bold text-[#00778A] dark:text-[#2DD4BF] focus:outline-none focus:ring-1 focus:ring-[#00778A]"
             placeholder="0.92"
           />
-          <span className="text-[10px] text-[#64748B] block mt-1">Prompt: 0.92</span>
+          {/* Interactive Delta Slider */}
+          <input
+            type="range"
+            min={calculator.optionType === 'PUT' ? "-1" : "0"}
+            max={calculator.optionType === 'PUT' ? "0" : "1"}
+            step="0.01"
+            value={
+              calculator.optionType === 'PUT'
+                ? Math.max(-1, Math.min(0, manualGreeks.delta))
+                : Math.max(0, Math.min(1, manualGreeks.delta))
+            }
+            onChange={(e) => setManualGreeks({ delta: parseFloat(e.target.value) })}
+            className="w-full accent-[#00778A] h-1.5 bg-[#CBD5E1] rounded-lg mt-1.5 cursor-pointer"
+          />
+          <div className="flex justify-between text-[9px] text-[#64748B] mt-0.5 font-mono">
+            <span>{calculator.optionType === 'PUT' ? '-1.00' : '0.00'}</span>
+            <span>{calculator.optionType === 'PUT' ? '-0.50' : '0.50'}</span>
+            <span>{calculator.optionType === 'PUT' ? '0.00' : '1.00'}</span>
+          </div>
         </div>
 
         {/* Gamma */}

@@ -2127,7 +2127,6 @@ export const GreeksWorkspaceView: React.FC = () => {
                 <span className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 block">
                   ₹{currentPremium.toFixed(2)}
                 </span>
-                <span className="text-[9px] text-slate-500">Baseline Spot</span>
               </div>
               <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30">
                 <span className="text-[10px] font-sans text-blue-700 dark:text-blue-400 block font-bold">Future Premium</span>
@@ -2146,63 +2145,6 @@ export const GreeksWorkspaceView: React.FC = () => {
                 <span className="text-[9px]">
                   ({premiumDiffPercent >= 0 ? '+' : ''}{premiumDiffPercent.toFixed(1)}%)
                 </span>
-              </div>
-            </div>
-
-            {/* Position Values */}
-            <div className="grid grid-cols-2 gap-2 font-mono">
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#08111F] border border-slate-200 dark:border-slate-800">
-                <span className="text-[10px] font-sans text-slate-600 dark:text-slate-400 block">Current Position Value</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-200 mt-0.5 block">
-                  ₹{Math.round(currentPositionValue).toLocaleString('en-IN')}
-                </span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#08111F] border border-slate-200 dark:border-slate-800">
-                <span className="text-[10px] font-sans text-slate-600 dark:text-slate-400 block">Future Position Value</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-slate-200 mt-0.5 block">
-                  ₹{Math.round(futurePositionValue).toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
-
-            {/* 3-Tier Money Impact: Per Unit, Per Lot, Total Position */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#08111F] border border-slate-200 dark:border-slate-800 space-y-2">
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block">
-                P&L Breakdown Across Sizes
-              </span>
-              <div className="grid grid-cols-3 gap-2 text-center font-mono">
-                <div className="p-2 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
-                  <span className="text-[9px] text-slate-500 block">Per Unit</span>
-                  <span className={`text-xs font-bold block ${pnlPerUnit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {pnlPerUnit >= 0 ? '+' : ''}₹{pnlPerUnit.toFixed(2)}
-                  </span>
-                </div>
-                <div className="p-2 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
-                  <span className="text-[9px] text-slate-500 block">Per Lot ({lotSize} Qty)</span>
-                  <span className={`text-xs font-bold block ${pnlPerLot >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {pnlPerLot >= 0 ? '+' : ''}₹{Math.round(pnlPerLot).toLocaleString('en-IN')}
-                  </span>
-                </div>
-                <div className={`p-2 rounded-xl border ${
-                  totalProfitLoss >= 0 ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30' : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30'
-                }`}>
-                  <span className="text-[9px] text-slate-600 dark:text-slate-400 block font-sans">Total ({lots} Lots)</span>
-                  <span className={`text-sm font-black block ${totalProfitLoss >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {totalProfitLoss >= 0 ? '+' : ''}₹{Math.round(totalProfitLoss).toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Breakeven & POP Banner */}
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-xs">
-              <div>
-                <span className="text-[10px] font-sans text-slate-600 dark:text-slate-400 block">Probability of Profit (POP)</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">{pop.toFixed(1)}%</span>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] font-sans text-slate-600 dark:text-slate-400 block">Expiry Breakeven</span>
-                <span className="font-bold text-slate-900 dark:text-white">₹{Math.round(breakeven).toLocaleString('en-IN')}</span>
               </div>
             </div>
           </div>
@@ -2334,7 +2276,7 @@ export const GreeksWorkspaceView: React.FC = () => {
                     <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
                       <TrendingUp className="w-4 h-4" />
                     </div>
-                    <div>
+                    <div style={{ paddingLeft: '-12px', paddingTop: '1px', marginTop: '-36px' }}>
                       <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                         1. Option Premium vs Spot Price
                       </h3>

@@ -11,6 +11,8 @@ import { SavedScenariosModal } from '../../components/calculator/SavedScenariosM
 import { GreekCalculationsModal } from '../../components/calculator/GreekCalculationsModal';
 import { ScenarioSimulator } from '../../components/calculator/ScenarioSimulator';
 import { GreeksSliderMatrix } from '../../components/calculator/GreeksSliderMatrix';
+import { GreeksSensitivitySimulator } from '../../components/calculator/GreeksSensitivitySimulator';
+import { GreeksWorkspaceView } from './GreeksWorkspaceView';
 import { AdvancedGreeksCharts } from '../../components/charts/AdvancedGreeksCharts';
 import { useGreeksStore } from '../../store/useGreeksStore';
 import {
@@ -51,12 +53,13 @@ export const CalculatorView: React.FC = () => {
   } = useGreeksStore();
 
   const [activeVisualizerTab, setActiveVisualizerTab] = useState<
-    'priceSimulator' | 'scenarioTable' | 'chartsSuite' | 'sliderMatrix'
+    'priceSimulator' | 'greeksSimulator' | 'scenarioTable' | 'chartsSuite' | 'sliderMatrix'
   >('priceSimulator');
 
   const [isSavedScenariosModalOpen, setIsSavedScenariosModalOpen] = useState<boolean>(false);
   const [isGreekCalculationsModalOpen, setIsGreekCalculationsModalOpen] = useState<boolean>(false);
   const [activeMovePoints, setActiveMovePoints] = useState<number>(1000);
+  const [viewMode, setViewMode] = useState<'workspace' | 'classic'>('workspace');
 
   useEffect(() => {
     loadDraft();
@@ -276,108 +279,164 @@ export const CalculatorView: React.FC = () => {
         </div>
       </div>
 
-      {/* 1. Mode Selection (Auto Calculate, Manual Greeks Entry, Screenshot Auto Fill) */}
-      <ModeSelector />
-
-      {/* 2. Conditional Mode Panels */}
-      {calculationMode === 'manual' && <ManualGreeksEntry />}
-      {calculationMode === 'screenshot' && <ScreenshotAutoFill />}
-
-      {/* 3. Common Inputs Section (Commodity, Spot, Strike, CE/PE, Expiry, IV, Lots, Lot Size) */}
-      <GreekForm />
-
-      {/* 4. Market Greeks vs Theoretical Greeks Comparison Card */}
-      <MarketVsTheoreticalGreeks />
-
-      {/* 5. Results Section (Current Premium, Future Premium, Delta, Gamma, Theta, Vega, Rho, POP, Breakeven, Intrinsic, Extrinsic) */}
-      <AdvancedGreeksResults expectedMovePoints={activeMovePoints} />
-
-      {/* 6. Visualizer Navigation Tabs (Price Movement Simulator, Scenario Table, Greek Charts Suite, Slider Matrix) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 bg-white/90 dark:bg-[#101828]/90 backdrop-blur-md rounded-2xl border border-[#DCE9EE] dark:border-[#1E293B] shadow-xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+      {/* Platform View Mode Switcher: Greeks Calculator Workspace vs Classic Form */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-white/80 dark:bg-[#101828]/80 backdrop-blur-md border border-[#DCE9EE] dark:border-[#1E293B] shadow-xs">
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setActiveVisualizerTab('priceSimulator')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeVisualizerTab === 'priceSimulator'
-                ? 'bg-[#00778A] text-white shadow-xs'
-                : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
+            onClick={() => setViewMode('workspace')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'workspace'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400'
+                : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] dark:hover:text-white bg-slate-100 dark:bg-slate-800'
             }`}
           >
-            <Sliders className="w-4 h-4" />
-            <span>Price Movement Simulator (Expected Move)</span>
+            <Cpu className="w-4 h-4" />
+            <span>Greeks Calculator Workspace (Terminal)</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setActiveVisualizerTab('scenarioTable')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeVisualizerTab === 'scenarioTable'
-                ? 'bg-[#00778A] text-white shadow-xs'
-                : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
-            }`}
-          >
-            <Table className="w-4 h-4" />
-            <span>Scenario Table (-2,000 to +2,000 Pts)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveVisualizerTab('chartsSuite')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeVisualizerTab === 'chartsSuite'
-                ? 'bg-[#00778A] text-white shadow-xs'
-                : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Greek Curves & POP Chart</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveVisualizerTab('sliderMatrix')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
-              activeVisualizerTab === 'sliderMatrix'
-                ? 'bg-[#00778A] text-white shadow-xs'
-                : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
+            onClick={() => setViewMode('classic')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'classic'
+                ? 'bg-[#00778A] text-white shadow-md'
+                : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] dark:hover:text-white bg-slate-100 dark:bg-slate-800'
             }`}
           >
             <Calculator className="w-4 h-4" />
-            <span>IV & Expiry Slider Matrix</span>
+            <span>Classic Form & Scenario Tables</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-2">
-          <button
-            type="button"
-            onClick={() => setIsSavedScenariosModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#00778A] dark:text-[#2DD4BF] bg-[#00778A]/10 dark:bg-[#00778A]/20 hover:bg-[#00778A]/20 transition-all border border-[#00778A]/20 cursor-pointer"
-          >
-            <Database className="w-3.5 h-3.5" />
-            <span>MongoDB Scenarios ({savedScenarios.length})</span>
-          </button>
-        </div>
+        <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
+          {viewMode === 'workspace' ? '3-Column Institutional Options Engine Active' : 'Classic Mode Active'}
+        </span>
       </div>
 
-      {/* 7. Active Tab View */}
-      {activeVisualizerTab === 'priceSimulator' && (
-        <PriceMovementSimulator
-          onSelectMove={(pts) => setActiveMovePoints(pts)}
-          onOpenSavedModal={() => setIsSavedScenariosModalOpen(true)}
-        />
+      {viewMode === 'workspace' ? (
+        <GreeksWorkspaceView />
+      ) : (
+        <>
+          {/* 1. Mode Selection (Auto Calculate, Manual Greeks Entry, Screenshot Auto Fill) */}
+          <ModeSelector />
+
+          {/* 2. Conditional Mode Panels */}
+          {calculationMode === 'manual' && <ManualGreeksEntry />}
+          {calculationMode === 'screenshot' && <ScreenshotAutoFill />}
+
+          {/* 3. Common Inputs Section (Commodity, Spot, Strike, CE/PE, Expiry, IV, Lots, Lot Size) */}
+          <GreekForm />
+
+          {/* 4. Market Greeks vs Theoretical Greeks Comparison Card */}
+          <MarketVsTheoreticalGreeks />
+
+          {/* 5. Results Section (Current Premium, Future Premium, Delta, Gamma, Theta, Vega, Rho, POP, Breakeven, Intrinsic, Extrinsic) */}
+          <AdvancedGreeksResults expectedMovePoints={activeMovePoints} />
+
+          {/* 6. Visualizer Navigation Tabs (Price Movement Simulator, Scenario Table, Greek Charts Suite, Slider Matrix) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 bg-white/90 dark:bg-[#101828]/90 backdrop-blur-md rounded-2xl border border-[#DCE9EE] dark:border-[#1E293B] shadow-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setActiveVisualizerTab('priceSimulator')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  activeVisualizerTab === 'priceSimulator'
+                    ? 'bg-[#00778A] text-white shadow-xs'
+                    : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
+                }`}
+              >
+                <Sliders className="w-4 h-4" />
+                <span>Price Movement Simulator</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveVisualizerTab('greeksSimulator')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activeVisualizerTab === 'greeksSimulator'
+                    ? 'bg-[#00778A] text-white shadow-xs'
+                    : 'text-[#00778A] dark:text-[#2DD4BF] hover:bg-[#00778A]/10 bg-[#00778A]/5 border border-[#00778A]/20'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Greeks Sensitivity Simulator (Pro)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveVisualizerTab('scenarioTable')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  activeVisualizerTab === 'scenarioTable'
+                    ? 'bg-[#00778A] text-white shadow-xs'
+                    : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
+                }`}
+              >
+                <Table className="w-4 h-4" />
+                <span>Scenario Table (-2,000 to +2,000 Pts)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveVisualizerTab('chartsSuite')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  activeVisualizerTab === 'chartsSuite'
+                    ? 'bg-[#00778A] text-white shadow-xs'
+                    : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Greek Curves & POP Chart</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveVisualizerTab('sliderMatrix')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  activeVisualizerTab === 'sliderMatrix'
+                    ? 'bg-[#00778A] text-white shadow-xs'
+                    : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
+                }`}
+              >
+                <Calculator className="w-4 h-4" />
+                <span>IV & Expiry Slider Matrix</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 px-2">
+              <button
+                type="button"
+                onClick={() => setIsSavedScenariosModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#00778A] dark:text-[#2DD4BF] bg-[#00778A]/10 dark:bg-[#00778A]/20 hover:bg-[#00778A]/20 transition-all border border-[#00778A]/20 cursor-pointer"
+              >
+                <Database className="w-3.5 h-3.5" />
+                <span>MongoDB Scenarios ({savedScenarios.length})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 7. Active Tab View */}
+          {activeVisualizerTab === 'priceSimulator' && (
+            <PriceMovementSimulator
+              onSelectMove={(pts) => setActiveMovePoints(pts)}
+              onOpenSavedModal={() => setIsSavedScenariosModalOpen(true)}
+            />
+          )}
+
+          {activeVisualizerTab === 'greeksSimulator' && <GreeksSensitivitySimulator />}
+
+          {activeVisualizerTab === 'scenarioTable' && (
+            <GreeksScenarioTable
+              selectedMove={activeMovePoints}
+              onSelectMove={(pts) => setActiveMovePoints(pts)}
+            />
+          )}
+
+          {activeVisualizerTab === 'chartsSuite' && <AdvancedGreeksCharts />}
+
+          {activeVisualizerTab === 'sliderMatrix' && <GreeksSliderMatrix />}
+        </>
       )}
-
-      {activeVisualizerTab === 'scenarioTable' && (
-        <GreeksScenarioTable
-          selectedMove={activeMovePoints}
-          onSelectMove={(pts) => setActiveMovePoints(pts)}
-        />
-      )}
-
-      {activeVisualizerTab === 'chartsSuite' && <AdvancedGreeksCharts />}
-
-      {activeVisualizerTab === 'sliderMatrix' && <GreeksSliderMatrix />}
 
       {/* Modals */}
       <GreekCalculationsModal

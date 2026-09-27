@@ -119,7 +119,7 @@ export const PriceMovementSimulator: React.FC<PriceMovementSimulatorProps> = ({
     } else {
       return {
         positiveMoves: [100, 250, 500, 1000, 1500, 2000],
-        negativeMoves: [-100, -250, -500, -1000, -1500, -2000, -2800]
+        negativeMoves: [-100, -250, -500, -1000, -1500, -2000]
       };
     }
   }, [currentPrice]);

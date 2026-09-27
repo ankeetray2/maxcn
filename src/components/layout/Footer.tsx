@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGreeksStore, NavigationTab } from '../../store/useGreeksStore';
 import { usePriceStore } from '../../store/priceStore';
-import { useAuthStore } from '../../store/authStore';
 import { TerminalStatusModal } from './TerminalStatusModal';
 import { TerminalDocsModal } from './TerminalDocsModal';
 import { TerminalApiDocsModal } from './TerminalApiDocsModal';
@@ -11,7 +10,6 @@ import {
   Calculator,
   Upload,
   LineChart,
-  User,
   Activity,
   Zap,
   Radio,
@@ -45,7 +43,6 @@ export const Footer: React.FC = () => {
   } = useGreeksStore();
 
   const { lastUpdated, isLoading: isPriceLoading } = usePriceStore();
-  const { user, isAuthenticated } = useAuthStore();
 
   // Modal Dialog States
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
@@ -142,7 +139,7 @@ export const Footer: React.FC = () => {
     { id: 'calculator', label: 'Calculator', icon: Calculator },
     { id: 'uploads', label: 'Upload', icon: Upload },
     { id: 'analytics', label: 'Analytics', icon: LineChart },
-    { id: 'auth', label: 'Profile', icon: User }
+    { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
   return (
@@ -405,36 +402,6 @@ export const Footer: React.FC = () => {
               <span className="text-[11px] font-bold">
                 {isDark ? 'Dark' : 'Light'}
               </span>
-            </button>
-
-            {/* Current User Profile Avatar */}
-            <button
-              type="button"
-              onClick={() => setActiveTab('auth')}
-              className="flex items-center gap-1.5 pl-1 pr-2 py-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 transition-colors cursor-pointer"
-              title={
-                isAuthenticated && user
-                  ? `${user.name} (${user.role.toUpperCase()})`
-                  : 'Trader Profile / Guest'
-              }
-            >
-              {isAuthenticated && user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-5 h-5 rounded-full object-cover border border-[#0EA5E9]"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-[#0EA5E9] to-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
-                  {isAuthenticated && user?.name
-                    ? user.name.slice(0, 1).toUpperCase()
-                    : 'T'}
-                </div>
-              )}
-              <span className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 max-w-[80px] truncate">
-                {isAuthenticated && user?.name ? user.name.split(' ')[0] : 'Profile'}
-              </span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </button>
           </div>
         </div>

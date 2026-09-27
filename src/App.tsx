@@ -3,26 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGreeksStore, applyTheme } from './store/useGreeksStore';
 import { useAutoPriceSync } from './hooks/useAutoPriceSync';
 import { Navbar } from './components/layout/Navbar';
-import { Sidebar } from './components/layout/Sidebar';
 import { Footer } from './components/layout/Footer';
 import { DashboardView } from './app/dashboard/DashboardView';
 import { CalculatorView } from './app/calculator/CalculatorView';
+import { GreeksSimulatorView } from './app/calculator/GreeksSimulatorView';
 import { AnalyticsView } from './app/analytics/AnalyticsView';
 import { UploadsView } from './app/uploads/UploadsView';
 import { HistoryView } from './app/history/HistoryView';
 import { SettingsView } from './app/settings/SettingsView';
-import { AuthView } from './app/auth/AuthView';
-import { AuthRouteGuard } from './components/auth/AuthRouteGuard';
-import { useAuthStore } from './store/authStore';
 
 export default function App() {
   const { activeTab, isSimulatingTicks, tickPriceUpdate, settings } = useGreeksStore();
-  const { initSession } = useAuthStore();
-
-  // Restore authenticated session from storage on app load
-  useEffect(() => {
-    initSession();
-  }, [initSession]);
 
   // Initialize and synchronize underlying live commodity price
   useAutoPriceSync();
@@ -54,47 +45,24 @@ export default function App() {
         return <DashboardView />;
       case 'calculator':
         return <CalculatorView />;
+      case 'scenario':
+        return <GreeksSimulatorView />;
       case 'analytics':
-        return (
-          <AuthRouteGuard
-            viewId="analytics"
-            viewTitle="Quantitative Analytics & Volatility Surfaces"
-            description="Accessing real-time risk analytics, Monte Carlo curves, and volatility skew surfaces requires an authenticated trader account."
-          >
-            <AnalyticsView />
-          </AuthRouteGuard>
-        );
+      case 'portfolio':
+        return <AnalyticsView />;
       case 'uploads':
         return <UploadsView />;
       case 'history':
       case 'reports':
-        return (
-          <AuthRouteGuard
-            viewId="history"
-            viewTitle="Historical Greeks & Calculation Records"
-            description="Accessing calculation history archives, audit records, and portfolio stress test logs requires an authenticated trader account."
-          >
-            <HistoryView />
-          </AuthRouteGuard>
-        );
-      case 'portfolio':
-        return (
-          <AuthRouteGuard
-            viewId="analytics"
-            viewTitle="Quantitative Portfolio & Volatility Analytics"
-            description="Accessing real-time portfolio risk analytics, sensitivity stress tests, and exposure requires an authenticated trader account."
-          >
-            <AnalyticsView />
-          </AuthRouteGuard>
-        );
+        return <HistoryView />;
       case 'settings':
         return <SettingsView />;
-      case 'auth':
-        return <AuthView />;
       default:
         return <DashboardView />;
     }
   };
+
+  const isWideLayout = activeTab === 'calculator' || activeTab === 'scenario' || activeTab === 'analytics';
 
   return (
     <div className="min-h-screen bg-[#F7FAFB] dark:bg-[#0B131B] text-[#1D2939] dark:text-[#F0F6F9] flex flex-col relative selection:bg-[#00778A]/20 selection:text-[#00778A] transition-colors duration-200">
@@ -105,26 +73,22 @@ export default function App() {
       {/* Top Navigation */}
       <Navbar />
 
-      {/* Main Trading Platform Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-20 sm:pb-24">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* Left Sidebar */}
-          <Sidebar />
-
-          {/* Right Main Content Panel */}
-          <div className="flex-1 w-full min-w-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {renderActiveView()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+      {/* Main Trading Platform Container - Wide for Laptop/PC Terminal */}
+      <main className={`flex-1 w-full mx-auto px-3 sm:px-5 lg:px-8 pt-4 sm:pt-6 pb-20 sm:pb-24 ${
+        isWideLayout ? 'max-w-[1920px]' : 'max-w-7xl'
+      }`}>
+        <div className="w-full min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {renderActiveView()}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 

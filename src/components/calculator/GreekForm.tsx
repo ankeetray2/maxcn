@@ -137,23 +137,23 @@ export const GreekForm: React.FC = () => {
     calculator.lotSize === 100;
 
   return (
-    <div className="bg-white/90 backdrop-blur-md p-6 rounded-[24px] border border-[#DCE9EE] shadow-sm">
+    <div className="bg-white/90 dark:bg-[#101828]/90 backdrop-blur-md p-6 rounded-[24px] border border-[#DCE9EE] dark:border-[#1E293B] shadow-sm">
       {/* Header & Quick Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#DCE9EE]/70 mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#DCE9EE]/70 dark:border-[#1E293B] mb-5">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#00778A]/10 text-[#00778A] flex items-center justify-center font-bold">
+          <div className="w-9 h-9 rounded-xl bg-[#00778A]/10 text-[#00778A] dark:bg-[#00778A]/25 dark:text-[#2DD4BF] flex items-center justify-center font-bold">
             <Calculator className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-[#1D2939]">
+              <h3 className="text-base font-bold text-[#1D2939] dark:text-white">
                 Input Section & Greeks Engine
               </h3>
               <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-[#12B76A]/15 text-[#12B76A]">
                 Auto-Filled & Manual
               </span>
             </div>
-            <p className="text-xs text-[#667085]">
+            <p className="text-xs text-[#667085] dark:text-[#94A3B8]">
               Black-Scholes Mathematical Engine with Multi-Lot Scaling
             </p>
           </div>
@@ -166,7 +166,7 @@ export const GreekForm: React.FC = () => {
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
               isBenchmarkActive
                 ? 'bg-[#00778A] text-white border-[#00778A] shadow-xs'
-                : 'bg-white text-[#00778A] border-[#DCE9EE] hover:bg-[#F7FAFB]'
+                : 'bg-white dark:bg-[#141F2B] text-[#00778A] dark:text-[#2DD4BF] border-[#DCE9EE] dark:border-[#223444] hover:bg-[#F7FAFB] dark:hover:bg-[#1E293B]'
             }`}
             title="Load Gold Mini prompt benchmark (153330 spot, 155000 strike, 28% IV, 18d, 10 lots)"
           >
@@ -185,7 +185,7 @@ export const GreekForm: React.FC = () => {
 
           <button
             onClick={handleResetDefaults}
-            className="flex items-center gap-1 text-xs font-semibold text-[#667085] hover:text-[#00778A] transition-colors p-1.5 rounded-lg hover:bg-[#F7FAFB]"
+            className="flex items-center gap-1 text-xs font-semibold text-[#667085] dark:text-[#94A3B8] hover:text-[#00778A] dark:hover:text-[#2DD4BF] transition-colors p-1.5 rounded-lg hover:bg-[#F7FAFB] dark:hover:bg-[#141F2B]"
             title="Reset to default commodity parameters"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -195,18 +195,18 @@ export const GreekForm: React.FC = () => {
       </div>
 
       {/* Dataset & Sync Status */}
-      <div className="mb-5 p-3 rounded-2xl bg-[#F7FAFB] border border-[#DCE9EE] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+      <div className="mb-5 p-3 rounded-2xl bg-[#F7FAFB] dark:bg-[#0F172A] border border-[#DCE9EE] dark:border-[#1E293B] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#12B76A] animate-pulse" />
-          <span className="text-[#1D2939] font-medium">
+          <span className="text-[#1D2939] dark:text-[#F0F6F9] font-medium">
             Active Dataset:{' '}
-            <strong className="text-[#00778A]">
+            <strong className="text-[#00778A] dark:text-[#2DD4BF]">
               {selectedCommodity === 'GOLD' ? 'Gold Mini (MCX)' : currentSpec.name}
             </strong>
             {activeUploadName ? ` • Synced via ${activeUploadName}` : ' • Direct Mode'}
           </span>
         </div>
-        <div className="text-[#667085] font-mono text-[11px]">
+        <div className="text-[#667085] dark:text-[#94A3B8] font-mono text-[11px]">
           Spot: ₹{calculator.spotPrice.toLocaleString('en-IN')} | Strike: {calculator.strikePrice} {calculator.optionType === 'CALL' ? 'CE' : 'PE'} | IV: {calculator.volatility}%
         </div>
       </div>
@@ -215,13 +215,13 @@ export const GreekForm: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {/* 1. Commodity */}
         <div>
-          <label className="block text-xs font-bold text-[#1D2939] mb-1.5">
+          <label className="block text-xs font-bold text-[#1D2939] dark:text-white mb-1.5">
             Commodity
           </label>
           <select
             value={calculator.commodity}
             onChange={(e) => handleCommodityChange(e.target.value as CommodityType)}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] text-xs font-semibold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141F2B] border border-[#DCE9EE] dark:border-[#223444] text-xs font-semibold text-[#1D2939] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs cursor-pointer"
           >
             <option value="GOLD">Gold Mini</option>
             {commodities.filter(c => c !== 'GOLD').map((c) => {
@@ -237,20 +237,20 @@ export const GreekForm: React.FC = () => {
 
         {/* 2. Option Type (CE / PE) */}
         <div>
-          <label className="block text-xs font-bold text-[#1D2939] mb-1.5">
+          <label className="block text-xs font-bold text-[#1D2939] dark:text-white mb-1.5">
             Option Type
           </label>
-          <div className="grid grid-cols-2 gap-2 p-1 bg-[#F7FAFB] rounded-xl border border-[#DCE9EE]">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-[#F7FAFB] dark:bg-[#0F172A] rounded-xl border border-[#DCE9EE] dark:border-[#223444]">
             <button
               type="button"
               onClick={() => {
                 setCalculatorInput({ optionType: 'CALL' });
                 runScenarioSimulation();
               }}
-              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calculator.optionType === 'CALL'
                   ? 'bg-[#00778A] text-white shadow-xs'
-                  : 'text-[#667085] hover:text-[#1D2939]'
+                  : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] dark:hover:text-white'
               }`}
             >
               CE (Call)
@@ -261,10 +261,10 @@ export const GreekForm: React.FC = () => {
                 setCalculatorInput({ optionType: 'PUT' });
                 runScenarioSimulation();
               }}
-              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all ${
+              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 calculator.optionType === 'PUT'
                   ? 'bg-[#7A9266] text-white shadow-xs'
-                  : 'text-[#667085] hover:text-[#1D2939]'
+                  : 'text-[#667085] dark:text-[#94A3B8] hover:text-[#1D2939] dark:hover:text-white'
               }`}
             >
               PE (Put)
@@ -276,15 +276,15 @@ export const GreekForm: React.FC = () => {
         <div>
           <div className="flex justify-between items-center mb-1.5">
             <div className="flex items-center gap-1.5">
-              <label className="text-xs font-bold text-[#1D2939]">
+              <label className="text-xs font-bold text-[#1D2939] dark:text-white">
                 Spot Price ({settings.currency === 'INR' ? '₹' : '$'})
               </label>
               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border transition-colors ${
                 spotPriceSource === 'Manual Input'
-                  ? 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]'
+                  ? 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89] dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40'
                   : spotPriceSource === 'Uploaded Screenshot'
-                  ? 'bg-[#F9F5FF] text-[#6941C6] border-[#E9D7FE]'
-                  : 'bg-[#ECFDF3] text-[#027A48] border-[#A6F4C5]'
+                  ? 'bg-[#F9F5FF] text-[#6941C6] border-[#E9D7FE] dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800/40'
+                  : 'bg-[#ECFDF3] text-[#027A48] border-[#A6F4C5] dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${
                   spotPriceSource === 'Manual Input'
@@ -301,7 +301,7 @@ export const GreekForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSpotPrice(liveGoldPrice, 'Live Market Price')}
-                  className="text-[10px] text-[#00778A] hover:underline font-semibold flex items-center gap-1"
+                  className="text-[10px] text-[#00778A] dark:text-[#2DD4BF] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
                   title="Switch Spot Price to live MCX feed"
                 >
                   <RefreshCw className="w-2.5 h-2.5" />
@@ -312,7 +312,7 @@ export const GreekForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSpotPrice(price.spotPrice, 'Uploaded Screenshot')}
-                  className="text-[10px] text-[#6941C6] hover:underline font-semibold"
+                  className="text-[10px] text-[#6941C6] dark:text-[#C084FC] hover:underline font-semibold cursor-pointer"
                   title="Switch Spot Price to uploaded screenshot value"
                 >
                   <span>Uploaded: ₹{price.spotPrice.toLocaleString('en-IN')}</span>
@@ -329,14 +329,14 @@ export const GreekForm: React.FC = () => {
                 const val = parseFloat(e.target.value) || 0;
                 setSpotPrice(val, 'Manual Input');
               }}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141F2B] border border-[#DCE9EE] dark:border-[#223444] font-mono text-xs font-bold text-[#1D2939] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
               placeholder="153669"
             />
           </div>
-          <div className="flex items-center justify-between text-[10px] text-[#667085] mt-1">
+          <div className="flex items-center justify-between text-[10px] text-[#667085] dark:text-[#94A3B8] mt-1">
             <span>Priority: 1. Manual Input &gt; 2. Uploaded Screenshot &gt; 3. Live Price</span>
             {spotPriceSource === 'Manual Input' && (
-              <span className="text-[#B54708] font-medium">Manual input active</span>
+              <span className="text-[#B54708] dark:text-[#FBBF24] font-medium">Manual input active</span>
             )}
           </div>
         </div>
@@ -344,13 +344,13 @@ export const GreekForm: React.FC = () => {
         {/* 4. Strike */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-bold text-[#1D2939]">
+            <label className="text-xs font-bold text-[#1D2939] dark:text-white">
               Strike ({settings.currency === 'INR' ? '₹' : '$'})
             </label>
             <button
               type="button"
               onClick={() => setCalculatorInput({ strikePrice: 155000 })}
-              className="text-[10px] text-[#00778A] hover:underline font-semibold"
+              className="text-[10px] text-[#00778A] dark:text-[#2DD4BF] hover:underline font-semibold cursor-pointer"
             >
               Set 155000
             </button>
@@ -360,17 +360,17 @@ export const GreekForm: React.FC = () => {
             step="100"
             value={calculator.strikePrice}
             onChange={(e) => setCalculatorInput({ strikePrice: parseFloat(e.target.value) || 0 })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141F2B] border border-[#DCE9EE] dark:border-[#223444] font-mono text-xs font-bold text-[#1D2939] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
           />
         </div>
 
         {/* 5. IV */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-bold text-[#1D2939]">
+            <label className="text-xs font-bold text-[#1D2939] dark:text-white">
               IV (%)
             </label>
-            <span className="text-[10px] text-[#667085]">
+            <span className="text-[10px] text-[#667085] dark:text-[#94A3B8]">
               Benchmark: 28%
             </span>
           </div>
@@ -381,20 +381,20 @@ export const GreekForm: React.FC = () => {
             max="250"
             value={calculator.volatility}
             onChange={(e) => setCalculatorInput({ volatility: parseFloat(e.target.value) || 0.1 })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141F2B] border border-[#DCE9EE] dark:border-[#223444] font-mono text-xs font-bold text-[#1D2939] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
           />
         </div>
 
         {/* 6. Days to Expiry */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-bold text-[#1D2939]">
+            <label className="text-xs font-bold text-[#1D2939] dark:text-white">
               Days to Expiry
             </label>
             <button
               type="button"
               onClick={() => setCalculatorInput({ expiryDays: 18 })}
-              className="text-[10px] text-[#00778A] hover:underline font-semibold"
+              className="text-[10px] text-[#00778A] dark:text-[#2DD4BF] hover:underline font-semibold cursor-pointer"
             >
               Set 18d
             </button>
@@ -405,17 +405,17 @@ export const GreekForm: React.FC = () => {
             max="365"
             value={calculator.expiryDays}
             onChange={(e) => setCalculatorInput({ expiryDays: parseInt(e.target.value, 10) || 1 })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141F2B] border border-[#DCE9EE] dark:border-[#223444] font-mono text-xs font-bold text-[#1D2939] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
           />
         </div>
 
         {/* 7. Lots */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-bold text-[#1D2939]">
+            <label className="text-xs font-bold text-[#1D2939] dark:text-white">
               Lots
             </label>
-            <span className="text-[10px] text-[#667085]">
+            <span className="text-[10px] text-[#667085] dark:text-[#94A3B8]">
               Position: {calculator.contracts} Lots
             </span>
           </div>
@@ -425,17 +425,17 @@ export const GreekForm: React.FC = () => {
             max="1000"
             value={calculator.contracts}
             onChange={(e) => setCalculatorInput({ contracts: parseInt(e.target.value, 10) || 1 })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141F2B] border border-[#DCE9EE] dark:border-[#223444] font-mono text-xs font-bold text-[#1D2939] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
           />
         </div>
 
         {/* 8. Lot Size */}
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs font-bold text-[#1D2939]">
+            <label className="text-xs font-bold text-[#1D2939] dark:text-white">
               Lot Size
             </label>
-            <span className="text-[10px] text-[#00778A] font-semibold">
+            <span className="text-[10px] text-[#00778A] dark:text-[#2DD4BF] font-semibold">
               Total: {(calculator.contracts * (calculator.lotSize || 100)).toLocaleString()} Qty
             </span>
           </div>
@@ -444,24 +444,24 @@ export const GreekForm: React.FC = () => {
             min="1"
             value={calculator.lotSize || 100}
             onChange={(e) => setCalculatorInput({ lotSize: parseFloat(e.target.value) || 1, isCustomLotSize: true })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#DCE9EE] font-mono text-xs font-bold text-[#1D2939] focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#141F2B] border border-[#DCE9EE] dark:border-[#223444] font-mono text-xs font-bold text-[#1D2939] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#00778A]/20 focus:border-[#00778A] shadow-xs"
           />
         </div>
       </div>
 
       {/* Quick chips row */}
-      <div className="mt-4 pt-3 border-t border-[#DCE9EE]/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="mt-4 pt-3 border-t border-[#DCE9EE]/60 dark:border-[#1E293B] flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[#667085] font-semibold">Quick Expiry:</span>
+          <span className="text-[#667085] dark:text-[#94A3B8] font-semibold">Quick Expiry:</span>
           {[1, 7, 14, 18, 30, 45].map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => setCalculatorInput({ expiryDays: d })}
-              className={`px-2 py-0.5 rounded-md font-mono transition-all ${
+              className={`px-2 py-0.5 rounded-md font-mono transition-all cursor-pointer ${
                 calculator.expiryDays === d
                   ? 'bg-[#00778A] text-white font-bold'
-                  : 'bg-[#F7FAFB] text-[#667085] hover:bg-white border border-[#DCE9EE]'
+                  : 'bg-[#F7FAFB] dark:bg-[#141F2B] text-[#667085] dark:text-[#94A3B8] hover:bg-white dark:hover:bg-[#1E293B] border border-[#DCE9EE] dark:border-[#223444]'
               }`}
             >
               {d}d
@@ -470,16 +470,16 @@ export const GreekForm: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[#667085] font-semibold">Quick Lots:</span>
+          <span className="text-[#667085] dark:text-[#94A3B8] font-semibold">Quick Lots:</span>
           {[1, 5, 10, 20, 50, 100].map((l) => (
             <button
               key={l}
               type="button"
               onClick={() => setCalculatorInput({ contracts: l })}
-              className={`px-2 py-0.5 rounded-md font-mono transition-all ${
+              className={`px-2 py-0.5 rounded-md font-mono transition-all cursor-pointer ${
                 calculator.contracts === l
                   ? 'bg-[#00778A] text-white font-bold'
-                  : 'bg-[#F7FAFB] text-[#667085] hover:bg-white border border-[#DCE9EE]'
+                  : 'bg-[#F7FAFB] dark:bg-[#141F2B] text-[#667085] dark:text-[#94A3B8] hover:bg-white dark:hover:bg-[#1E293B] border border-[#DCE9EE] dark:border-[#223444]'
               }`}
             >
               {l} Lots
